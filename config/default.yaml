@@ -1,0 +1,36 @@
+experiment:
+  name: "default_synthetic_smoke"
+  output_dir: "outputs/default_synthetic"
+  seed: 42
+  dataset_version: "synthetic_v1.0"
+  benchmark_version: "synthetic_smoke"
+
+model:
+  backbone:
+    variant: "vits"
+    checkpoint_path: "checkpoints/depth_anything_v2_vits.pth"
+    frozen: true
+  head:
+    name: "relative_depth"
+    features: 64
+    out_channels: [48, 96, 192, 384]
+
+dataset:
+  name: "synthetic"
+  num_samples: 16
+  batch_size: 4
+  num_workers: 0
+  image_size: 518
+
+training:
+  epochs: 2
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-2
+  amp: true
+  clip_grad_norm: 1.0
+  save_interval: 1
+
+eval:
+  align_scale_shift: true
+  min_depth: 0.001
+  max_depth: 80.0

@@ -1,0 +1,82 @@
+[
+  {
+    "name": "Missing Config File CLI",
+    "status": "PASS",
+    "details": "Exit code 1, stderr: xFormers not available\nxFormers not available\nError: Configuration file not found at 'non_existent_config_123.yaml'"
+  },
+  {
+    "name": "Malformed YAML Syntax CLI",
+    "status": "PASS",
+    "details": "Exit code 1, handled cleanly with YAML error: xFormers not available\nxFormers not available\nTraceback (most recent call last):\n  File \"C:\\Users\\ru"
+  },
+  {
+    "name": "Empty YAML File (0 bytes)",
+    "status": "FAIL_CRASH",
+    "details": "Exit code 1, stderr: xFormers not available\nxFormers not available\nTraceback (most recent call last):\n  File \"C:\\Users\\rushd\\Downloads\\prj-res\\train.py\", line 40, in <module>\n    main()\n    ~~~~^^\n  File \"C:\\Users\\rushd\\D"
+  },
+  {
+    "name": "Unregistered Head Config",
+    "status": "FAIL",
+    "details": "Raised unexpected error: KeyError: \"Head 'non_existent_head_xyz' not found in registry. Available heads: ['relative_depth']\""
+  },
+  {
+    "name": "Unregistered Dataset Config",
+    "status": "FAIL",
+    "details": "Raised unexpected error: KeyError: \"Dataset 'non_existent_dataset_abc' not found in registry. Available datasets: ['dummy', 'kitti', 'nyuv2', 'synthetic']\""
+  },
+  {
+    "name": "Invalid Data Types (string batch_size)",
+    "status": "PASS",
+    "details": "Raised expected ValueError: invalid literal for int() with base 10: 'invalid_string_bs'"
+  },
+  {
+    "name": "Feature Ablation Stage 99",
+    "status": "SILENT_NOOP",
+    "details": "Out-of-range stage index 99 was silently ignored without error or warning"
+  },
+  {
+    "name": "Feature Ablation Negative Index -1",
+    "status": "SILENT_IGNORED",
+    "details": "Negative index -1 was ignored (stage 3 non-zero: True)"
+  },
+  {
+    "name": "eval.py --ablate-layer 99 CLI",
+    "status": "PASS_SILENT",
+    "details": "Exit code 0, output summary:  0.0000 |\n| d1         |     0.0000 |\n| d2         |     0.0000 |\n| d3         |     0.0000 |\n+------------+------------+\n[Eval] Saved evaluation results to outputs\\default_synthetic\\eval_results.json"
+  },
+  {
+    "name": "Zero Batch Size (batch_size=0)",
+    "status": "PASS",
+    "details": "Raised expected ValueError: batch_size should be a positive integer value, but got batch_size=0"
+  },
+  {
+    "name": "Non-Square Spatial Res (378x504 -> 27x36 patches)",
+    "status": "BUG_CRASH",
+    "details": "CRASH: RuntimeError: shape '[1, 384, 31, 31]' is invalid for input of size 373248"
+  },
+  {
+    "name": "Non-Multiple of 14 (500x500)",
+    "status": "CRASH",
+    "details": "DINOv2 backbone crashed on 500x500: AssertionError: Input image height 500 is not a multiple of patch height 14"
+  },
+  {
+    "name": "Single Channel Image (1x518x518)",
+    "status": "PASS_HANDLED",
+    "details": "Raised expected shape/channel exception: RuntimeError: Given groups=1, weight of size [384, 3, 14, 14], expected input[1, 1, 518, 518] to have 3 channels, but got 1 channels instead"
+  },
+  {
+    "name": "verify.py --all Normal Environment",
+    "status": "PASS",
+    "details": "Exit code 0, summary line: ['OVERALL STATUS: ALL CHECKS PASSED (VERIFICATION SUCCESS)']"
+  },
+  {
+    "name": "verify.py Missing Checkpoint",
+    "status": "PASS",
+    "details": "Exit code 1, reported failure gracefully without unhandled exception"
+  },
+  {
+    "name": "verify.py Missing Reproduction Report",
+    "status": "PASS",
+    "details": "Exit code 1, reported failure gracefully"
+  }
+]

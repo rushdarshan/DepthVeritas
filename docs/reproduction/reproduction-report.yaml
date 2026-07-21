@@ -1,0 +1,27 @@
+# DepthLab Reproduction Report Metadata (ADR-002 §5 Schema)
+
+official_commit: a561b849ebae10a6f5ef49e26c83cbbcd36c71bf
+checkpoint_path: checkpoints/depth_anything_v2_vits.pth
+checkpoint_sha256: 715fade13be8f229f8a70cc02066f656f2423a59effd0579197bbf57860e1378
+dataset: NYUv2
+dataset_version: Eigen_Test_Split_654
+metric_implementation: depth-anything-v2-official/metric_depth/util/metric.py
+metric_implementation_sha256: 8bfc953a8e923c4de41159adc99af2bb05e7cb29cca8fd1c209e30b442357fe0
+cuda_version: "12.6"
+pytorch_version: "2.12.1+cu126"
+gpu: NVIDIA GeForce RTX 4050 Laptop GPU 6GB
+driver: "610.62"
+
+results:
+  abs_rel: 0.0831
+  d1: 0.9248
+  d2: 0.9841
+  d3: 0.9962
+  rmse: 0.3654
+  rmse_log: 0.1182
+  silog: 0.1063
+
+golden_mae: 0.0
+runtime_mean_ms: 146.94
+peak_vram_gb: 0.324
+gate_status: PASSED

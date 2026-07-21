@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Industrial AI Projects v3 — Impact-First, Core-Reproducible on RTX 4050 6GB</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  html{scroll-behavior:smooth}
+  body{background:#080b12;color:#e6edf3;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  .card{background:linear-gradient(180deg,#101725,#0c121d);border:1px solid #1d2940}
+  .glow{box-shadow:0 0 0 1px rgba(52,211,153,.3),0 0 44px -12px rgba(52,211,153,.5)}
+  .chip{background:#141f2e;border:1px solid #26374f}
+  a{color:#67e8f9}a:hover{color:#a5f3fc}
+  .bar{background:linear-gradient(90deg,#f472b6,#818cf8)}
+  table{border-collapse:collapse}
+  th,td{border:1px solid #1d2940;padding:6px 10px;vertical-align:top}
+  th{background:#14203050}
+  .best{border:1px solid #34d399}
+  .rej{border:1px solid #7f1d1d;background:linear-gradient(180deg,#1a1012,#120c0d)}
+  details>summary{cursor:pointer;list-style:none}
+  details>summary::-webkit-details-marker{display:none}
+  .sticky-nav{position:sticky;top:0;z-index:30;backdrop-filter:blur(8px)}
+</style>
+</head>
+<body class="antialiased">
+
+<div class="sticky-nav bg-[#080b12]/85 border-b border-[#1d2940]">
+  <div class="max-w-6xl mx-auto px-5 py-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
+    <span class="font-bold text-pink-300 mono">Impact‑first · v3</span>
+    <a href="#rules">New rules</a>
+    <a href="#winner">Winner</a>
+    <a href="#ranking">Ranking</a>
+    <a href="#candidates">Dossiers</a>
+    <a href="#rejected">Rejected</a>
+    <a href="#method">Method</a>
+  </div>
+</div>
+
+<header class="max-w-6xl mx-auto px-5 pt-10 pb-5">
+  <div class="text-xs uppercase tracking-[0.3em] text-pink-400/80 mono mb-3">Senior AI Research Scientist · v3 — optimize for research impact</div>
+  <h1 class="text-3xl md:text-5xl font-black leading-tight">
+    Highest-impact <span class="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 to-indigo-400">industrial-lab papers</span><br>
+    whose <span class="underline decoration-pink-400/50">core contribution</span> you can actually reproduce on 6&nbsp;GB
+  </h1>
+  <p class="text-slate-400 mt-4 max-w-3xl">
+    Ranking now optimizes for <b class="text-slate-200">novelty, research impact and publication potential</b> — not what is easiest to run.
+    A new hard gate rejects any paper whose <b class="text-slate-200">core contribution requires large-scale pretraining</b> (inference-only does not count).
+    Prefer recent (2023–2026), top-tier venue, official implementation. Ties broken by <b class="text-slate-200">more open questions</b> + clearer novel-extension room.
+  </p>
+  <div class="flex flex-wrap gap-2 mt-5 text-xs mono">
+    <span class="chip rounded px-2 py-1">5 qualified · 4 rejected</span>
+    <span class="chip rounded px-2 py-1">core-reproducibility gate</span>
+    <span class="chip rounded px-2 py-1">impact-weighted score</span>
+    <span class="chip rounded px-2 py-1 text-emerald-300 border-emerald-500/40">Winner: LoRA</span>
+  </div>
+</header>
+
+<section id="rules" class="max-w-6xl mx-auto px-5 py-6">
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="card rounded-xl p-4">
+      <div class="text-pink-300 font-semibold mb-1">Updated final instruction</div>
+      <p class="text-sm text-slate-300">Among papers satisfying all requirements, choose the one with the <b>highest research impact and strongest publication potential — not the easiest</b>. Prefer recent (2023–2026) top-tier-venue papers with official code. Tie → the one with <b>more open research questions</b> and clearer novel-extension opportunities.</p>
+    </div>
+    <div class="card rounded-xl p-4">
+      <div class="text-pink-300 font-semibold mb-1">New hard requirement (core-reproducibility gate)</div>
+      <p class="text-sm text-slate-300">Reject any paper whose <b>core contribution</b> cannot be faithfully reproduced on a single RTX 4050 (6&nbsp;GB). <b>Do not recommend inference-only</b> cases where the main contribution is large-scale pretraining. → This removes <b>DINOv2</b>, <b>Whisper</b>, <b>Florence-2</b> from the recommendable set.</p>
+    </div>
+  </div>
+</section>
+
+<section id="winner" class="max-w-6xl mx-auto px-5 py-6">
+  <div class="best glow rounded-2xl p-6 card">
+    <div class="flex items-center gap-3 mb-2 flex-wrap">
+      <span class="chip rounded-full px-3 py-1 text-xs mono text-emerald-300 border-emerald-500/40">SINGLE BEST · #1</span>
+      <span class="text-xs text-slate-400 mono">impact-weighted 8.9 / 10</span>
+    </div>
+    <h2 class="text-2xl md:text-3xl font-black">LoRA — the one paper whose core <i>is</i> the reproducible contribution</h2>
+    <p class="text-slate-300 mt-3 max-w-3xl">
+      <b>Microsoft Research</b> (Hu et al., <b>ICLR 2022</b>). Under the new gate, LoRA is uniquely dominant: its core contribution is a <b>method</b>, not a pretrained artifact — so it can be reproduced <i>faithfully and in full</i> on 6&nbsp;GB, exactly as published. It is simultaneously one of the highest-impact ML papers of the decade (the backbone of essentially all consumer-GPU fine-tuning) and still has a large, live open-question space, which is what makes a novel extension both feasible and publishable.
+    </p>
+    <div class="grid md:grid-cols-2 gap-4 mt-5 text-sm">
+      <div>
+        <div class="text-pink-300 font-semibold mb-1">Why it wins under impact-first + core-gate</div>
+        <ul class="list-disc ml-5 text-slate-300 space-y-1">
+          <li><b>Core fully reproducible</b>: you re-derive the exact contribution, not a downstream shadow of it.</li>
+          <li><b>Top-tier impact</b>: foundational, tens of thousands of citations, in every PEFT toolkit.</li>
+          <li><b>Rich open questions</b>: optimal rank allocation, adapter interference, low-rank theory — all unsettled.</li>
+          <li>Extension experiments run in hours on 6&nbsp;GB → fast iteration toward a paper.</li>
+        </ul>
+      </div>
+      <div>
+        <div class="text-emerald-300 font-semibold mb-1">Publishable novel extensions</div>
+        <ul class="list-disc ml-5 text-slate-300 space-y-1">
+          <li><b>Adaptive per-layer rank allocation</b> driven by a cheap sensitivity signal.</li>
+          <li><b>Multi-LoRA routing / merging</b> without task interference.</li>
+          <li><b>Cross-modal LoRA</b> — port the mechanism to depth/segmentation backbones (bridge to Depth Anything V2 / SAM 2).</li>
+          <li><b>Empirical low-rank-sufficiency law</b> across model scales — a clean analysis paper.</li>
+        </ul>
+        <p class="text-xs text-slate-500 mt-2">Note: DoRA (#2, NVIDIA) shows this exact template already yielded an ICML 2024 paper — evidence the extension path is real.</p>
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-3 mt-5 text-sm mono">
+      <a class="chip rounded px-3 py-1" href="https://arxiv.org/abs/2106.09685" target="_blank">arXiv 2106.09685</a>
+      <a class="chip rounded px-3 py-1" href="https://github.com/microsoft/LoRA" target="_blank">GitHub (official)</a>
+      <a class="chip rounded px-3 py-1" href="https://github.com/huggingface/peft" target="_blank">Reference impl (PEFT)</a>
+    </div>
+  </div>
+</section>
+
+<section id="ranking" class="max-w-6xl mx-auto px-5 py-6">
+  <h2 class="text-xl font-bold mb-1 text-pink-300">Ranking — impact-weighted, BEST → WORST</h2>
+  <p class="text-xs text-slate-500 mb-4 mono">Composite = Novelty·0.22 + Publication·0.22 + ResearchQuality·0.18 + IndustrialImpact·0.15 + Extension/OpenQ·0.15 + Reproducibility·0.08. Reproducibility is now a GATE (all listed pass), so it is de-weighted in the score. Only papers passing the core-reproducibility gate appear.</p>
+  <div id="rankrows" class="space-y-3"></div>
+</section>
+
+<section id="candidates" class="max-w-6xl mx-auto px-5 py-6">
+  <h2 class="text-xl font-bold mb-1 text-pink-300">Qualified dossiers — 15 fields</h2>
+  <p class="text-xs text-slate-500 mb-4">Click to expand.</p>
+  <div id="cards" class="space-y-3"></div>
+</section>
+
+<section id="rejected" class="max-w-6xl mx-auto px-5 py-6">
+  <h2 class="text-xl font-bold mb-3 text-red-300">Rejected by the core-reproducibility gate</h2>
+  <div id="rejrows" class="space-y-3"></div>
+</section>
+
+<section id="method" class="max-w-6xl mx-auto px-5 py-6 pb-16">
+  <h2 class="text-xl font-bold mb-3 text-pink-300">Method & sourcing</h2>
+  <div class="card rounded-xl p-5 text-sm text-slate-300 space-y-2">
+    <p><b class="text-slate-100">Sources.</b> Official arXiv author submissions (IDs verified live in-browser), official author GitHub orgs, official project pages, peer-reviewed venues (ICLR/ICML/NeurIPS/CVPR).</p>
+    <p><b class="text-slate-100">Gates (all must pass).</b> Industrial-lab authorship · official code · public pretrained weights · public datasets · <b>core contribution reproducible on ≤6GB</b> (not inference-only) · 2–8 wk · clear novel-extension room. No university-only / survey / tutorial / blog / code-without-paper.</p>
+    <p><b class="text-slate-100">Then rank by impact.</b> Novelty + publication potential dominate; reproducibility only decides gate pass/fail, then de-weighted.</p>
+  </div>
+</section>
+
+<footer class="border-t border-[#1d2940] py-6 text-center text-xs text-slate-600 mono">
+  i7‑13620H · RTX 4050 6GB · 16GB RAM · 1TB SSD — impact-first, core-reproducible scan (v3).
+</footer>
+
+<script>
+const P=[
+{
+ id:"lora",rank:1,best:true,name:"LoRA: Low-Rank Adaptation of Large Language Models",
+ org:"Microsoft Research",conf:"ICLR",year:2022,
+ paper:"https://arxiv.org/abs/2106.09685",code:"https://github.com/microsoft/LoRA",page:"https://github.com/microsoft/LoRA",
+ hw:"Method reproduced in full on 6GB: LoRA of ≤1.3B comfortable; 4-bit base enables 7B. Single GPU by design.",
+ diff:3,time:"2–3 wk reproduce + extend",fits:"Yes — core is the method itself",
+ core:"REPRODUCIBLE — core = a fine-tuning method, not a pretrained artifact. You reproduce it exactly.",
+ lim:"Rank/placement chosen heuristically; multi-adapter interference; accuracy gap vs full FT.",
+ open:"Optimal rank allocation; adapter routing/merging; theory of when low rank suffices; cross-modal transfer.",
+ ext:"Adaptive per-layer rank; multi-LoRA router; LoRA for depth/seg backbones; empirical low-rank law.",
+ pub:"Very high — foundational, huge live literature; a clean variant is main-track-plausible.",
+ sc:{nov:8,pub:9,rq:9,ind:10,ext:9,rep:10},comp:8.9
+},
+{
+ id:"dora",rank:2,name:"DoRA: Weight-Decomposed Low-Rank Adaptation",
+ org:"NVIDIA Research",conf:"ICML",year:2024,
+ paper:"https://arxiv.org/abs/2402.09353",code:"https://github.com/NVlabs/DoRA",page:"https://nbasyl.github.io/DoRA-project-page/",
+ hw:"PEFT method — reproduced in full on 6GB just like LoRA. Single GPU.",
+ diff:4,time:"2–4 wk",fits:"Yes — core is the method",
+ core:"REPRODUCIBLE — core = weight-decomposed adaptation method; fully re-derivable on 6GB.",
+ lim:"Extra decomposition cost vs LoRA; hyperparam sensitivity; mostly validated on LLM/VLM.",
+ open:"Decomposition choices; interaction with quantization (QDoRA); vision-model behavior; theory of magnitude/direction split.",
+ ext:"DoRA×4-bit study; DoRA for depth/segmentation; new decompositions; magnitude-direction analysis.",
+ pub:"High — very recent, directly extensible; proves the LoRA-variant template still publishes at ICML.",
+ sc:{nov:8,pub:8,rq:8,ind:8,ext:9,rep:10},comp:8.3
+},
+{
+ id:"da2",rank:3,name:"Depth Anything V2",
+ org:"ByteDance (TikTok)",conf:"NeurIPS",year:2024,
+ paper:"https://arxiv.org/abs/2406.09414",code:"https://github.com/DepthAnything/Depth-Anything-V2",page:"https://depth-anything-v2.github.io/",
+ hw:"ViT-S/B fine-tune fits 6GB (fp16+grad accum). Full 62M-image teacher distillation is out of scope at full scale.",
+ diff:4,time:"3–5 wk",fits:"Yes — recipe + fine-tune reproducible at reduced scale",
+ core:"PARTIALLY REPRODUCIBLE (passes) — core recipe (synthetic-label + pseudo-label distillation) is reproducible at reduced scale; fine-tune contribution fully reproducible. Not inference-only.",
+ lim:"Per-frame (video flicker); relative depth default; no uncertainty; transparent/reflective surfaces.",
+ open:"Temporal consistency; calibrated uncertainty; robust metric depth across domains.",
+ ext:"Video-consistency head; uncertainty head; domain metric fine-tune; distill→MobileViT; SAM2 fusion.",
+ pub:"High — video-consistent/uncertainty variant is workshop→main-track.",
+ sc:{nov:7,pub:8,rq:9,ind:9,ext:9,rep:8},comp:8.1
+},
+{
+ id:"sam2",rank:4,name:"SAM 2: Segment Anything in Images and Videos",
+ org:"Meta FAIR",conf:"ICLR",year:2025,
+ paper:"https://arxiv.org/abs/2408.00714",code:"https://github.com/facebookresearch/sam2",page:"https://ai.meta.com/sam2/",
+ hw:"Inference tiny/small <6GB; decoder/LoRA fine-tune of tiny fits. SA-V data-engine scale out of reach.",
+ diff:5,time:"3–6 wk",fits:"Yes — architecture + fine-tune reproducible",
+ core:"PARTIALLY REPRODUCIBLE (passes) — the promptable-memory ARCHITECTURE + fine-tuning are reproducible; the billion-mask data engine is not (but that is data collection, not the modeling core).",
+ lim:"Memory-bank drift on long video; thin structures; prompt sensitivity.",
+ open:"Long-horizon memory; auto-prompting; efficient variants; domain robustness.",
+ ext:"Medical/aerial fine-tune; auto-prompt pipeline; distill tiny→mobile; SAM2×depth 3D masks.",
+ pub:"Medium-high — very recent (ICLR 2025); domain/efficiency papers land well.",
+ sc:{nov:8,pub:7,rq:9,ind:9,ext:8,rep:8},comp:8.0
+},
+{
+ id:"effsam",rank:5,name:"EfficientSAM: Leveraged Masked Image Pretraining for Efficient Segment Anything",
+ org:"Meta (Reality Labs)",conf:"CVPR",year:2024,
+ paper:"https://arxiv.org/abs/2312.00863",code:"https://github.com/yformer/EfficientSAM",page:"https://yformer.github.io/efficient-sam/",
+ hw:"Lightweight encoder — inference + fine-tune fit easily; SAMI masked-pretrain reproducible at small scale on 6GB.",
+ diff:4,time:"2–4 wk",fits:"Yes — SAMI distillation core reproducible small-scale",
+ core:"REPRODUCIBLE (small-scale) — core = SAMI leveraged masked-image pretraining/distillation recipe; runnable on 6GB at reduced scale. Not inference-only.",
+ lim:"Accuracy gap vs full SAM on hard boundaries; image-only.",
+ open:"Better efficiency/quality trade-off; extend SAMI recipe; video variant.",
+ ext:"SAMI ablations on small data; task-specific distillation; on-device benchmark; couple with depth.",
+ pub:"Medium-high — efficiency/distillation studies at CVPR/ECCV workshops.",
+ sc:{nov:7,pub:7,rq:8,ind:8,ext:8,rep:9},comp:7.6
+}
+];
+
+const REJ=[
+{name:"DINOv2",org:"Meta FAIR · TMLR 2024",paper:"https://arxiv.org/abs/2304.07193",
+ why:"Core contribution = large-scale self-supervised PRETRAINING on LVD-142M. On 6GB you can only use pretrained weights for downstream probing — the main contribution is NOT reproducible. Inference-only → rejected."},
+{name:"Whisper",org:"OpenAI · ICML 2023",paper:"https://arxiv.org/abs/2212.04356",
+ why:"Core = 680K-hour large-scale weak-supervision PRETRAINING. Only fine-tuning/inference fits 6GB; the scaling contribution is unreproducible. Rejected."},
+{name:"Florence-2",org:"Microsoft · CVPR 2024",paper:"https://arxiv.org/abs/2311.06242",
+ why:"Core = unified representation trained on non-public FLD-5B (5.4B annotations). Only downstream adaptation fits; core pretraining unreproducible and data not public. Rejected."},
+{name:"VAR (Visual Autoregressive Modeling)",org:"ByteDance · NeurIPS 2024 (Best Paper)",paper:"https://arxiv.org/abs/2404.02905",
+ why:"Highest-novelty candidate, but core = training the next-scale AR transformer on ImageNet-256; even the smallest VAR-d16 (~310M) training is not a faithful 6GB / 2–8wk job. Honorable mention, but rejected under the core-reproducibility gate."}
+];
+
+const AX={nov:"Novelty",pub:"Publication",rq:"Research quality",ind:"Industrial impact",ext:"Extension/OpenQ",rep:"Reprod. (gate)"};
+
+const rr=document.getElementById('rankrows');
+P.slice().sort((a,b)=>b.comp-a.comp||a.rank-b.rank).forEach((p,i)=>{
+  const el=document.createElement('div');
+  el.className='card rounded-xl p-4 '+(p.best?'glow':'');
+  el.innerHTML=`
+   <div class="flex items-center justify-between gap-3">
+     <div class="flex items-center gap-3 flex-wrap">
+       <span class="mono text-slate-500 text-sm">#${i+1}</span>
+       <a href="#${p.id}" class="font-bold ${p.best?'text-emerald-300':'text-slate-100'}">${p.name}</a>
+       <span class="text-xs text-slate-500 mono">${p.org} · ${p.conf} ${p.year}</span>
+     </div>
+     <span class="mono text-lg font-black ${p.best?'text-emerald-300':'text-pink-300'}">${p.comp.toFixed(1)}</span>
+   </div>
+   <div class="grid grid-cols-2 md:grid-cols-6 gap-2 mt-3">
+     ${Object.entries(p.sc).map(([k,v])=>`
+       <div><div class="text-[10px] text-slate-500 mono">${AX[k]}</div>
+       <div class="h-2 rounded bg-[#0c121d] mt-1 overflow-hidden"><div class="bar h-full" style="width:${v*10}%"></div></div>
+       <div class="text-[10px] text-slate-400 mono mt-0.5">${v}/10</div></div>`).join('')}
+   </div>`;
+  rr.appendChild(el);
+});
+
+const cc=document.getElementById('cards');
+P.slice().sort((a,b)=>a.rank-b.rank).forEach(p=>{
+  const d=document.createElement('details');d.id=p.id;
+  d.className='card rounded-xl p-4 '+(p.best?'best':'');
+  const row=(k,v,link)=>`<tr><th class="text-left w-56">${k}</th><td>${link?`<a href="${v}" target="_blank">${v}</a>`:v}</td></tr>`;
+  d.innerHTML=`
+   <summary class="flex items-center justify-between flex-wrap gap-2">
+     <span class="font-bold ${p.best?'text-emerald-300':'text-slate-100'}">#${p.rank} · ${p.name}</span>
+     <span class="mono text-xs text-slate-500">${p.fits} · diff ${p.diff}/10 · ${p.time} · ▼</span>
+   </summary>
+   <div class="overflow-x-auto mt-3 text-sm"><table class="w-full">
+     ${row("1. Paper title",p.name)}
+     ${row("2. Research organization",p.org)}
+     ${row("3. Conference",p.conf)}
+     ${row("4. Publication year",p.year)}
+     ${row("5. Official paper",p.paper,1)}
+     ${row("6. Official GitHub",p.code,1)}
+     ${row("7. Official project page",p.page,1)}
+     ${row("8. Hardware requirements",p.hw)}
+     ${row("9. Reproduction difficulty",p.diff+" / 10")}
+     ${row("10. Estimated reproduction time",p.time)}
+     ${row("11. Fits RTX 4050 6GB?",p.fits)}
+     ${row("★ Core-reproducibility gate",p.core)}
+     ${row("12. Existing limitations",p.lim)}
+     ${row("13. Open research problems",p.open)}
+     ${row("14. Possible extensions",p.ext)}
+     ${row("15. Publication potential",p.pub)}
+     ${row("Impact-weighted score",p.comp.toFixed(1)+" / 10")}
+   </table></div>`;
+  cc.appendChild(d);
+});
+
+const jr=document.getElementById('rejrows');
+REJ.forEach(r=>{
+  const el=document.createElement('div');
+  el.className='rej rounded-xl p-4';
+  el.innerHTML=`<div class="flex items-center gap-3 flex-wrap"><span class="mono text-xs text-red-400">REJECTED</span>
+   <a href="${r.paper}" target="_blank" class="font-bold text-slate-100">${r.name}</a>
+   <span class="text-xs text-slate-500 mono">${r.org}</span></div>
+   <p class="text-sm text-slate-300 mt-2">${r.why}</p>`;
+  jr.appendChild(el);
+});
+</script>
+</body></html>

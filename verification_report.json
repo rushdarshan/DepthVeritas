@@ -1,0 +1,175 @@
+{
+  "timestamp": "2026-07-21T17:50:16Z",
+  "config": {
+    "checkpoint": "C:\\Users\\rushd\\Downloads\\prj-res\\checkpoints\\depth_anything_v2_vits.pth",
+    "encoder": "vits",
+    "device": "cuda",
+    "tolerance": 1e-06,
+    "run_all": true
+  },
+  "results": [
+    {
+      "name": "Checkpoint Loading",
+      "passed": true,
+      "message": "PASSED: Loaded vits (24.79M params) from 'depth_anything_v2_vits.pth'",
+      "details": {
+        "params_m": 24.785089,
+        "checkpoint": "C:\\Users\\rushd\\Downloads\\prj-res\\checkpoints\\depth_anything_v2_vits.pth"
+      },
+      "error": null
+    },
+    {
+      "name": "FP16 Mixed Precision Execution",
+      "passed": true,
+      "message": "PASSED: Execution succeeded under FP16/autocast (cuda)",
+      "details": {
+        "device": "cuda"
+      },
+      "error": null
+    },
+    {
+      "name": "Output Shape Integrity",
+      "passed": true,
+      "message": "PASSED: Shape (1362, 2048) matches input ((1362, 2048))",
+      "details": {
+        "expected": [
+          1362,
+          2048
+        ],
+        "actual": [
+          1362,
+          2048
+        ]
+      },
+      "error": null
+    },
+    {
+      "name": "Non-Negative Depth Range",
+      "passed": true,
+      "message": "PASSED: Depth range [0.0000, 10.1250] >= 0.0",
+      "details": {
+        "min": 0.0,
+        "max": 10.125
+      },
+      "error": null
+    },
+    {
+      "name": "Absence of NaNs / Infs",
+      "passed": true,
+      "message": "PASSED: Zero NaNs and Infs detected in output depth map",
+      "details": {
+        "has_nan": false,
+        "has_inf": false
+      },
+      "error": null
+    },
+    {
+      "name": "Runtime Bounds (<= 1.0s @ 518x518)",
+      "passed": true,
+      "message": "PASSED: Mean runtime 144.9ms <= 1000ms",
+      "details": {
+        "mean_ms": 144.90066000071238,
+        "min_ms": 140.0896000013745,
+        "max_ms": 148.38480000071286
+      },
+      "error": null
+    },
+    {
+      "name": "Peak VRAM Bounds (<= 2.0GB)",
+      "passed": true,
+      "message": "PASSED: Peak VRAM 0.324GB <= 2.0GB",
+      "details": {
+        "peak_vram_gb": 0.3243741989135742,
+        "limit_gb": 2.0
+      },
+      "error": null
+    },
+    {
+      "name": "Golden Fixture Regression Check",
+      "passed": true,
+      "message": "PASSED: Golden MAE (max=0.00e+00, mean=0.00e+00) < tolerance 1.0e-06",
+      "details": {
+        "max_mae": 0.0,
+        "mean_mae": 0.0,
+        "tolerance": 1e-06,
+        "samples_checked": 10,
+        "fixtures": [
+          {
+            "sample_id": "demo01",
+            "mae": 0.0,
+            "passed": true
+          },
+          {
+            "sample_id": "demo02",
+            "mae": 0.0,
+            "passed": true
+          },
+          {
+            "sample_id": "demo03",
+            "mae": 0.0,
+            "passed": true
+          },
+          {
+            "sample_id": "demo04",
+            "mae": 0.0,
+            "passed": true
+          },
+          {
+            "sample_id": "demo05",
+            "mae": 0.0,
+            "passed": true
+          },
+          {
+            "sample_id": "demo06",
+            "mae": 0.0,
+            "passed": true
+          },
+          {
+            "sample_id": "demo07",
+            "mae": 0.0,
+            "passed": true
+          },
+          {
+            "sample_id": "demo08",
+            "mae": 0.0,
+            "passed": true
+          },
+          {
+            "sample_id": "demo09",
+            "mae": 0.0,
+            "passed": true
+          },
+          {
+            "sample_id": "demo10",
+            "mae": 0.0,
+            "passed": true
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "name": "Synthetic Extreme Input Stress Test (--all)",
+      "passed": true,
+      "message": "PASSED: Zero NaNs/Infs produced on synthetic black, white, and noise inputs",
+      "details": {
+        "black_min": 0.06198837608098984,
+        "white_min": 0.11793149262666702,
+        "noise_min": 1.9164572954177856
+      },
+      "error": null
+    },
+    {
+      "name": "Multi-Iteration Memory Accumulation Check (--all)",
+      "passed": true,
+      "message": "PASSED: Memory growth over 20 iterations is 0.00MB <= 1.0MB",
+      "details": {
+        "start_mb": 102.68017578125,
+        "end_mb": 102.68017578125,
+        "drift_mb": 0.0
+      },
+      "error": null
+    }
+  ],
+  "all_passed": true
+}

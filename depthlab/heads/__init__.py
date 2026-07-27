@@ -54,8 +54,15 @@ def list_heads() -> List[str]:
     return sorted(list(_HEAD_REGISTRY.keys()))
 
 
-# Import head submodules to trigger registration
-from depthlab.heads import relative_depth, sef, uncertainty
+# Lightweight heads remain usable in CPU-only CI. The official DPT decoder is
+# registered when the optional upstream checkout is available.
+from depthlab.heads import sef, uncertainty
+
+try:
+    from depthlab.heads import relative_depth
+except ModuleNotFoundError as exc:
+    if exc.name != "depth_anything_v2":
+        raise
 
 __all__ = [
     "BaseHead",

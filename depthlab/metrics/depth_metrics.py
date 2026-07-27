@@ -2,6 +2,7 @@
 depthlab/metrics/depth_metrics.py — Core Depth Estimation Metric Definitions.
 """
 
+import math
 from typing import Dict, Optional, Tuple
 import torch
 import torch.nn as nn
@@ -72,7 +73,12 @@ def compute_depth_metrics(
     if target.ndim == 3:
         target = target.unsqueeze(1)
 
-    valid_mask = (target > min_depth) & (target < max_depth) & ~torch.isnan(target) & ~torch.isinf(target)
+    valid_mask = (
+        (target > min_depth)
+        & (target < max_depth)
+        & torch.isfinite(target)
+        & torch.isfinite(pred)
+    )
     if mask is not None:
         if mask.ndim == 3:
             mask = mask.unsqueeze(1)
@@ -111,17 +117,21 @@ def compute_depth_metrics(
     silog = torch.sqrt(torch.mean(log_diff ** 2) - (torch.mean(log_diff) ** 2) + 1e-8).item() * 100.0
     log10 = torch.mean(torch.abs(torch.log10(p) - torch.log10(t))).item()
 
+    def finite(value: float) -> float:
+        value = float(value)
+        return value if math.isfinite(value) else 0.0
+
     return {
-        "abs_rel": float(abs_rel),
-        "sq_rel": float(sq_rel),
-        "rmse": float(rmse),
-        "rmse_log": float(rmse_log),
-        "silog": float(silog),
-        "log10": float(log10),
-        "delta1": float(d1),
-        "delta2": float(d2),
-        "delta3": float(d3),
-        "d1": float(d1),
-        "d2": float(d2),
-        "d3": float(d3),
+        "abs_rel": finite(abs_rel),
+        "sq_rel": finite(sq_rel),
+        "rmse": finite(rmse),
+        "rmse_log": finite(rmse_log),
+        "silog": finite(silog),
+        "log10": finite(log10),
+        "delta1": finite(d1),
+        "delta2": finite(d2),
+        "delta3": finite(d3),
+        "d1": finite(d1),
+        "d2": finite(d2),
+        "d3": finite(d3),
     }

@@ -1,7 +1,10 @@
 import csv
 from pathlib import Path
 
+import torch
+
 from depthlab.preflight import validate_depth_manifest, validate_training_config
+from depthlab.metrics import compute_depth_metrics
 
 
 def _write_manifest(path: Path, image: Path, depth: Path) -> None:
@@ -32,3 +35,8 @@ def test_config_checks_checkpoint_before_model_load(tmp_path: Path) -> None:
     report = validate_training_config({"model": {"backbone": {"checkpoint_path": "missing.pth"}}, "dataset": {"name": "synthetic"}}, tmp_path)
     assert not report.ok
     assert "Backbone checkpoint does not exist" in report.errors[0]
+
+
+def test_metrics_exclude_non_finite_predictions() -> None:
+    metrics = compute_depth_metrics(torch.tensor([[float("nan")]]), torch.tensor([[1.0]]))
+    assert all(value == 0.0 for value in metrics.values())

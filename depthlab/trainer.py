@@ -129,6 +129,7 @@ class Trainer:
         head_params.pop("name", None)
         head_params.setdefault("encoder_variant", encoder_variant)
         self.head = get_head(head_name, **head_params).to(self.device)
+        self._initialize_head()
 
         # Datasets and Loaders
         self.train_loader, self.val_loader = self._setup_dataloaders()
@@ -234,6 +235,21 @@ class Trainer:
         val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
         return train_loader, val_loader
 
+    def _initialize_head(self) -> None:
+        """Load a warm-up head checkpoint before configuring fine-tuning."""
+        checkpoint_value = self.train_cfg.get("init_head_checkpoint")
+        if not checkpoint_value:
+            return
+        checkpoint_path = Path(checkpoint_value)
+        if not checkpoint_path.is_absolute():
+            checkpoint_path = PROJECT_ROOT / checkpoint_path
+        if not checkpoint_path.is_file():
+            raise FileNotFoundError(f"Initial head checkpoint does not exist: {checkpoint_path}")
+        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        state_dict = checkpoint.get("head_state_dict", checkpoint) if isinstance(checkpoint, dict) else checkpoint
+        self.head.load_state_dict(state_dict)
+        print(f"[Trainer] Initialized head from {checkpoint_path}")
+
     def train_epoch(self, epoch: int) -> float:
         self.head.train()
         backbone_trainable = any(parameter.requires_grad for parameter in self.backbone.parameters())
@@ -302,7 +318,17 @@ class Trainer:
 
                 val_loss += loss.item()
                 pred_depth = preds.get("depth", preds.get("predicted_depth"))
-                dispatcher.update(pred_depth, targets, valid_mask)
+                metric_target = targets
+                metric_mask = valid_mask
+                if metric_target.shape[-2:] != pred_depth.shape[-2:]:
+                    metric_target = torch.nn.functional.interpolate(
+                        metric_target.unsqueeze(1), size=pred_depth.shape[-2:], mode="nearest"
+                    ).squeeze(1)
+                    if metric_mask is not None:
+                        metric_mask = torch.nn.functional.interpolate(
+                            metric_mask.float().unsqueeze(1), size=pred_depth.shape[-2:], mode="nearest"
+                        ).squeeze(1).bool()
+                dispatcher.update(pred_depth, metric_target, metric_mask)
 
         avg_val_loss = val_loss / max(len(self.val_loader), 1)
         metrics = dispatcher.compute()

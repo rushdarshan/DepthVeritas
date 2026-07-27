@@ -27,7 +27,8 @@ class SEFLoss(nn.Module):
         labels = distances.argmin(dim=-1)
         log_probs = probabilities.clamp_min(1e-8).log()
         cross_entropy = F.nll_loss(log_probs[valid_mask], labels[valid_mask])
-        nearest_centers = centers[:, None, None, :].gather(3, labels[..., None]).squeeze(-1)
+        center_grid = centers[:, None, None, :].expand_as(probabilities)
+        nearest_centers = center_grid.gather(3, labels[..., None]).squeeze(-1)
         center_error = (nearest_centers[valid_mask] - target[valid_mask]).abs().mean()
         entropy = -(probabilities * log_probs).sum(dim=-1)[valid_mask].mean()
         return cross_entropy + self.center_weight * center_error + self.entropy_weight * entropy

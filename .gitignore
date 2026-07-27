@@ -30,6 +30,7 @@ datasets/
 data/*
 !data/templates/
 !data/templates/**
+nyu_depth_v2_labeled*.mat
 
 # Generated experiment outputs
 runs/

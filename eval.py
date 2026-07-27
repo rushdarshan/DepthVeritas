@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import List, Optional
 import yaml
 import torch
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from depthlab.backbone.loader import load_da2_checkpoint
@@ -102,7 +103,16 @@ def main():
 
             preds = head(features)
             pred_depth = preds.get("depth", preds.get("predicted_depth"))
-            dispatcher.update(pred_depth, targets)
+            valid_mask = batch.get("valid_mask")
+            if valid_mask is not None:
+                valid_mask = valid_mask.to(device)
+            if targets.shape[-2:] != pred_depth.shape[-2:]:
+                targets = F.interpolate(targets.unsqueeze(1), size=pred_depth.shape[-2:], mode="nearest").squeeze(1)
+                if valid_mask is not None:
+                    valid_mask = F.interpolate(
+                        valid_mask.float().unsqueeze(1), size=pred_depth.shape[-2:], mode="nearest"
+                    ).squeeze(1).bool()
+            dispatcher.update(pred_depth, targets, valid_mask)
 
     results = dispatcher.compute()
     print("\n================ Evaluation Results ================")

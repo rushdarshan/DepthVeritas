@@ -9,6 +9,7 @@ import torch
 
 from depthlab.anchoring import AnchoringConfig, anchor_scale
 from depthlab.heads.sef import SEFHead
+from depthlab.losses.sef import SEFLoss
 from depthlab.metrics.calibration import expected_calibration_error
 from depthlab.promptable import ScalePredictor, get_click_features
 from depthlab.refinement import refine_depth
@@ -23,6 +24,12 @@ def test_sef_probabilities_and_centers() -> None:
 
 def test_sef_single_bin_entropy_is_zero() -> None:
     assert torch.equal(SEFHead(4, n_bins=1)(torch.randn(1, 4, 2, 2))["entropy"], torch.zeros(1, 2, 2))
+
+
+def test_sef_loss_supports_spatial_bin_centers() -> None:
+    output = SEFHead(8, n_bins=4)(torch.randn(2, 8, 3, 3))
+    loss = SEFLoss()(output, torch.rand(2, 3, 3) + 0.1)
+    assert torch.isfinite(loss)
 
 
 def test_promptable_scale_is_positive_and_small() -> None:

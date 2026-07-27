@@ -5,6 +5,10 @@ param(
 
 $ErrorActionPreference = "Stop"
 python scripts/preflight.py --config $WarmupConfig
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 python train.py --config $WarmupConfig
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 python scripts/preflight.py --config $FineTuneConfig
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 python train.py --config $FineTuneConfig
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

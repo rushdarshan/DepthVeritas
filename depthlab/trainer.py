@@ -186,8 +186,8 @@ class Trainer:
             "dataset_version": self.exp_cfg.get("dataset_version", self.data_cfg.get("version", "unknown")),
             "benchmark_version": self.exp_cfg.get("benchmark_version", self.config.get("benchmark", {}).get("version", "unknown")),
             "python_version": sys.version.split()[0],
-            "pytorch_version": torch.__version__,
-            "cuda_version": torch.version.cuda if torch.cuda.is_available() else None,
+            "pytorch_version": str(torch.__version__),
+            "cuda_version": str(torch.version.cuda) if torch.cuda.is_available() and torch.version.cuda else None,
             "device_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU",
         }
 
@@ -206,8 +206,8 @@ class Trainer:
                 },
                 "system": {
                     "python_version": sys.version.split()[0],
-                    "pytorch_version": torch.__version__,
-                    "cuda_version": torch.version.cuda if torch.cuda.is_available() else None,
+                    "pytorch_version": str(torch.__version__),
+                    "cuda_version": str(torch.version.cuda) if torch.cuda.is_available() and torch.version.cuda else None,
                     "device_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU",
                 },
                 "config_dump": self.config

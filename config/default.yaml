@@ -1,6 +1,5 @@
 experiment:
   name: "default_synthetic_smoke"
-  output_dir: "outputs/default_synthetic"
   seed: 42
   dataset_version: "synthetic_v1.0"
   benchmark_version: "synthetic_smoke"
@@ -27,6 +26,7 @@ training:
   learning_rate: 1.0e-4
   weight_decay: 1.0e-2
   amp: true
+  resume: false
   clip_grad_norm: 1.0
   save_interval: 1
 

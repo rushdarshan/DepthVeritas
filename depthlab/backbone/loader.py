@@ -52,8 +52,10 @@ def load_da2_checkpoint(
 
     backbone = DA2Backbone(official_model=official_model, variant=variant, adapter=adapter)
 
-    if freeze:
-        for param in backbone.parameters():
+    for param in backbone.official_model.parameters():
+        param.requires_grad = not freeze
+    if not freeze and hasattr(backbone.official_model.pretrained, "patch_embed"):
+        for param in backbone.official_model.pretrained.patch_embed.parameters():
             param.requires_grad = False
 
     backbone = backbone.to(device).eval()

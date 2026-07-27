@@ -3,7 +3,7 @@ depthlab/backbone/adapter.py — Feature representations, Adapters, and DA2Backb
 """
 
 import dataclasses
-from typing import List, Optional, Tuple, Dict, Any, Union
+from typing import List, Optional
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -53,6 +53,18 @@ class FeatureBundle:
     @property
     def embed_dim(self) -> int:
         return self.stages[0].embed_dim if self.stages else 0
+
+    @property
+    def patch_tokens(self) -> List[torch.Tensor]:
+        return [stage.patch_tokens for stage in self.stages]
+
+    @property
+    def cls_tokens(self) -> List[Optional[torch.Tensor]]:
+        return [stage.cls_token for stage in self.stages]
+
+    @property
+    def embed_dims(self) -> List[int]:
+        return [stage.embed_dim for stage in self.stages]
 
     def to(self, device=None, dtype=None) -> 'FeatureBundle':
         return FeatureBundle(stages=[stage.to(device=device, dtype=dtype) for stage in self.stages])
@@ -168,20 +180,22 @@ class LoRAAdapter(BaseAdapter):
 
 class DA2Backbone(nn.Module):
     """Frozen wrapper around official Depth Anything V2 backbone with FeatureBundle extraction."""
+    INTERMEDIATE_LAYER_IDX = {
+        'vits': [2, 5, 8, 11],
+        'vitb': [2, 5, 8, 11],
+        'vitl': [4, 11, 17, 23],
+        'vitg': [9, 19, 29, 39]
+    }
+
     def __init__(self, official_model: nn.Module, variant: str = "vits", adapter: Optional[BaseAdapter] = None):
         super().__init__()
+        if variant not in self.INTERMEDIATE_LAYER_IDX:
+            raise ValueError(f"Unknown DA2 variant '{variant}'. Available: {sorted(self.INTERMEDIATE_LAYER_IDX)}")
         self.official_model = official_model
-        self.variant = variant
+        self._variant = variant
         self.adapter = adapter if adapter is not None else IdentityAdapter()
-
-        self.intermediate_layer_idx = {
-            'vits': [2, 5, 8, 11],
-            'vitb': [2, 5, 8, 11],
-            'vitl': [4, 11, 17, 23],
-            'vitg': [9, 19, 29, 39]
-        }[variant]
-
-        self.embed_dim = self.official_model.pretrained.embed_dim
+        self.intermediate_layer_idx = self.INTERMEDIATE_LAYER_IDX[variant]
+        self._embed_dim = self.official_model.pretrained.embed_dim
 
         # Freeze official backbone parameters
         for param in self.official_model.parameters():
@@ -199,14 +213,27 @@ class DA2Backbone(nn.Module):
                 patch_tokens=patch_tokens,
                 cls_token=cls_token,
                 stage_index=i,
-                embed_dim=self.embed_dim
+                embed_dim=self._embed_dim
             ))
 
         bundle = FeatureBundle(stages=stages)
         return self.adapter(bundle)
 
-    def forward(self, x: torch.Tensor) -> FeatureBundle:
-        return self.features(x)
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Run the official DA2 depth head and return a depth tensor."""
+        return self.official_model(x)
+
+    @property
+    def embed_dim(self) -> int:
+        return self._embed_dim
+
+    @property
+    def variant(self) -> str:
+        return self._variant
+
+    def load(self, path: str) -> None:
+        state_dict = torch.load(path, map_location="cpu")
+        self.official_model.load_state_dict(state_dict)
 
     @torch.no_grad()
     def infer_image(self, raw_image, input_size=518):

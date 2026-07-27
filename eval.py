@@ -60,7 +60,7 @@ def main():
     ckpt_path = args.checkpoint
     if ckpt_path is None:
         out_d = Path(config.get("experiment", {}).get("output_dir", "outputs/default"))
-        ckpt_path = out_d / "checkpoint_latest.pth"
+        ckpt_path = out_d / "checkpoints" / "checkpoint_latest.pth"
 
     if ckpt_path.exists():
         ckpt = torch.load(ckpt_path, map_location=device)

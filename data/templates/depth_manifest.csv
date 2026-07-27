@@ -1,0 +1,2 @@
+id,split,image_path,depth_path
+sample-000001,train,images/sample-000001.png,depth/sample-000001.npy

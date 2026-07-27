@@ -1,5 +1,6 @@
 experiment:
   name: sef-end-to-end
+  output_dir: runs/sef-end-to-end
   seed: 42
   benchmark_version: 1.0.0-dev
 model:
@@ -14,13 +15,14 @@ model:
 dataset:
   name: file_list
   manifest: data/depth_manifest.csv
-  image_size: 384
+  image_size: 392
   batch_size: 2
   num_workers: 0
 training:
   epochs: 10
   learning_rate: 0.00001
   amp: true
-  resume: true
+  resume: false
+  init_head_checkpoint: runs/sef-warmup/checkpoints/head-sef-latest.pth
 eval:
   align_scale_shift: false

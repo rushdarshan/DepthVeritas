@@ -1,5 +1,6 @@
 experiment:
   name: sef-warmup
+  output_dir: runs/sef-warmup
   seed: 42
   benchmark_version: 1.0.0-dev
 model:
@@ -16,7 +17,7 @@ model:
 dataset:
   name: file_list
   manifest: data/depth_manifest.csv
-  image_size: 384
+  image_size: 392
   batch_size: 4
   num_workers: 0
 training:

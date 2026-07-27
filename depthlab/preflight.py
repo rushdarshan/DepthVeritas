@@ -75,6 +75,12 @@ def validate_training_config(config: dict[str, Any], project_root: str | Path) -
     report.details["checkpoint"] = str(checkpoint)
     if not checkpoint.is_file():
         report.errors.append(f"Backbone checkpoint does not exist: {checkpoint}")
+    initial_head = config.get("training", {}).get("init_head_checkpoint")
+    if initial_head:
+        initial_head_path = resolve_path(root, initial_head)
+        report.details["initial_head_checkpoint"] = str(initial_head_path)
+        if not initial_head_path.is_file():
+            report.errors.append(f"Initial head checkpoint does not exist: {initial_head_path}")
     dataset = config.get("dataset", {})
     dataset_name = dataset.get("name", "synthetic")
     report.details["dataset"] = dataset_name

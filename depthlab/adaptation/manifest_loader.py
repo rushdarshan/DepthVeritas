@@ -29,10 +29,13 @@ class AdaptationManifest(Dataset):
         manifest: str | Path,
         split: str = "adapt",
         min_baseline: float = 0.05,
+        check_baseline: bool | None = None,
         **_: Any,
     ) -> None:
         self.manifest = Path(manifest)
+        self.split = split
         self.min_baseline = min_baseline
+        self.check_baseline = min_baseline > 0 if check_baseline is None else check_baseline
         entries: List[Dict[str, Any]] = json.loads(self.manifest.read_text(encoding="utf-8"))
         self.entries = [e for e in entries if e.get("split", split) == split]
         if not self.entries:
@@ -66,7 +69,7 @@ class AdaptationManifest(Dataset):
         pose = torch.tensor(row["transform"], dtype=torch.float32).reshape(4, 4)
 
         baseline = self._check_baseline(pose)
-        if baseline < self.min_baseline:
+        if self.check_baseline and baseline < self.min_baseline:
             raise ValueError(
                 f"Translation baseline {baseline:.4f} < min_baseline {self.min_baseline}. "
                 "Tiny-baseline or pure-rotation pairs cannot constrain depth."

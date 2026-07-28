@@ -50,7 +50,8 @@ def projected_coords_in_bounds(pixels: torch.Tensor, H: int, W: int) -> torch.Te
 
 def positive_z_mask(z: torch.Tensor) -> torch.Tensor:
     """Binary mask [B, 1, H, W] for positive target-frame depth."""
-    return z.unsqueeze(1) if z.ndim == 3 else z
+    z_ = z.unsqueeze(1) if z.ndim == 3 else z
+    return z_ > 0
 
 
 def occlusion_mask(
@@ -92,7 +93,6 @@ def minimum_reprojection_mask(
     for src, pix in zip(source_images, pixels_list):
         warped = sample_at_pixels(src, pix)
         err = (target_image - warped).abs().mean(1, keepdim=True)
-        if min_err is None or err.lt(min_err).all():
-            min_err = err
+        min_err = err if min_err is None else torch.minimum(min_err, err)
     # ponytail: fixed threshold — revisit with learned or adaptive threshold
     return min_err < 0.15

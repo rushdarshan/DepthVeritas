@@ -27,7 +27,7 @@ class SceneManager:
     ) -> None:
         self.backbone = backbone
         self.initial_state = copy.deepcopy(correction_net.state_dict())
-        self.correction_net = correction_net
+        self.correction_net = correction_net.to(device)
         self.device = device
         self.adapted_state: Optional[dict] = None
         self.adapted_scale: float = 1.0

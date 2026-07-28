@@ -99,7 +99,7 @@ def adapt_scene(
                     torch.zeros(1, 2, *scaled_depth.shape[-2:], device=device), *scaled_depth.shape[-2:]
                 )
                 if in_bounds.any():
-                    total += (z[in_bounds]).abs().mean()
+                    total += (z[in_bounds[:, 0]]).abs().mean()
                     count += 1
         net.train()
         if count == 0:
@@ -127,10 +127,9 @@ def adapt_scene(
             z_pos = positive_z_mask(z)
             valid_mask = in_bounds & z_pos
 
-            depth_target = feat.new_zeros(1, 1, H, W)
-            target_sampled = sample_target_depth(depth_target, pixels)
-            occ = occlusion_mask(scaled_depth, target_sampled.clamp_min(1e-6))
-            valid_mask = valid_mask & occ
+            # ponytail: occlusion mask omitted — no valid target-depth estimate
+            # during self-supervised adaptation. Add when a geometry-validity
+            # module with reliable target depth is available.
 
             if not valid_mask.any():
                 continue

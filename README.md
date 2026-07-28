@@ -42,3 +42,15 @@ Benchmark version `1.0.0-dev` is not frozen until licensed sample provenance,
 curated counts, and baseline predictions exist. See `IMPLEMENTATION_STATUS.md`
 for the distinction between verified platform code and dataset-dependent
 research evidence.
+
+## Demonstration Dashboard
+
+Start the local project dashboard to demonstrate live depth-map comparison and
+the completed NYU experiment:
+
+```powershell
+streamlit run dashboard.py
+```
+
+The dashboard uses the local DA2 checkpoint and trained SEF checkpoint. It can
+show the bundled NYU sample or compare depth maps for an uploaded RGB image.

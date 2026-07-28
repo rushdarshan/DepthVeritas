@@ -26,11 +26,16 @@ checkpoints/*.pth
 # Datasets (large)
 data/
 datasets/
+!data/
+data/*
+!data/templates/
+!data/templates/**
 
 # Generated experiment outputs
 runs/
 outputs/
 experiments/
+results/
 
 # GPU performance profiling
 scratch/

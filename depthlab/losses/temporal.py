@@ -33,7 +33,24 @@ class PhotometricConsistencyLoss(nn.Module):
 
 
 class TemporalConsistencyLoss(nn.Module):
-    def forward(self, depth_t: torch.Tensor, depth_next: torch.Tensor,
-                projected_depth: torch.Tensor, mask: Optional[torch.Tensor] = None) -> torch.Tensor:
-        error = (depth_next - projected_depth).abs() / depth_next.clamp_min(1e-3)
+    """Temporal depth consistency loss.
+
+    Compares projected depth (z from reproject_depth) against the target
+    depth sampled at those projected coordinates — NOT at original pixel
+    locations. This is the correct geometric comparison.
+    """
+
+    def __init__(self, min_z: float = 1e-3) -> None:
+        super().__init__()
+        self.min_z = min_z
+
+    def forward(
+        self,
+        depth_target: torch.Tensor,
+        projected_z: torch.Tensor,
+        pixels: torch.Tensor,
+        mask: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
+        depth_sampled = sample_at_pixels(depth_target, pixels)
+        error = (depth_sampled - projected_z).abs() / depth_sampled.clamp_min(self.min_z)
         return error[mask].mean() if mask is not None and mask.any() else error.mean()

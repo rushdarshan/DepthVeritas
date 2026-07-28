@@ -1,0 +1,26 @@
+experiment:
+  name: sef-end-to-end
+  seed: 42
+  benchmark_version: 1.0.0-dev
+model:
+  backbone:
+    variant: vits
+    checkpoint_path: checkpoints/depth_anything_v2_vits.pth
+    frozen: false
+  head:
+    name: sef
+    n_bins: 96
+    hidden_dim: 256
+dataset:
+  name: file_list
+  manifest: data/depth_manifest.csv
+  image_size: 384
+  batch_size: 2
+  num_workers: 0
+training:
+  epochs: 10
+  learning_rate: 0.00001
+  amp: true
+  resume: true
+eval:
+  align_scale_shift: false

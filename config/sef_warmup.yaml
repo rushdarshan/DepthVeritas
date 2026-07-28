@@ -1,0 +1,28 @@
+experiment:
+  name: sef-warmup
+  seed: 42
+  benchmark_version: 1.0.0-dev
+model:
+  backbone:
+    variant: vits
+    checkpoint_path: checkpoints/depth_anything_v2_vits.pth
+    frozen: true
+  head:
+    name: sef
+    n_bins: 96
+    hidden_dim: 256
+    center_weight: 0.1
+    entropy_weight: 0.0
+dataset:
+  name: file_list
+  manifest: data/depth_manifest.csv
+  image_size: 384
+  batch_size: 4
+  num_workers: 0
+training:
+  epochs: 20
+  learning_rate: 0.0001
+  amp: true
+  resume: false
+eval:
+  align_scale_shift: false

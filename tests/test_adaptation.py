@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import math
 from pathlib import Path
 
 import pytest
@@ -44,14 +43,11 @@ class TestCorrectionNet:
         feats = torch.randn(1, 384, 37, 37)
         base = torch.full((1, 1, 518, 518), 5.0)
         corrected, gate, residual = net(feats, base)
-        assert torch.allclose(corrected, base, atol=1e-4), (
-            f"Identity init should preserve base depth, max diff={(
-                corrected - base).abs().max().item()}"
-        )
+        assert torch.allclose(corrected, base, atol=1e-4)
 
     def test_params_under_2m(self):
         n = sum(p.numel() for p in CorrectionNet().parameters())
-        assert n < 2_000_000, f"CorrectionNet has {n} params, limit is 2M"
+        assert n < 2_000_000
 
     def test_non_positive_base_depth_raises(self):
         net = CorrectionNet()
@@ -67,11 +63,10 @@ class TestCorrectionNet:
 
 
 # ---------------------------------------------------------------------------
-# U2: Manifest loader
+# U2: Manifest loader (paired source/target frames)
 # ---------------------------------------------------------------------------
 
 def _tiny_png(path: Path) -> None:
-    """Write a minimal valid 1x1 white PNG."""
     import struct, zlib
     sig = b'\x89PNG\r\n\x1a\n'
     ihdr_data = struct.pack('>IIBBBBB', 1, 1, 8, 2, 0, 0, 0)
@@ -92,21 +87,25 @@ class TestManifestLoader:
         entries = [
             {
                 "split": "adapt",
-                "image_path": "frame_0000.png",
+                "source_image_path": "src_0000.png",
+                "target_image_path": "tgt_0000.png",
                 "intrinsics": [500, 0, 320, 0, 500, 240, 0, 0, 1],
                 "transform": [1, 0, 0, 0.1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
             },
             {
                 "split": "test",
-                "image_path": "frame_0001.png",
+                "source_image_path": "src_0001.png",
+                "target_image_path": "tgt_0001.png",
                 "intrinsics": [500, 0, 320, 0, 500, 240, 0, 0, 1],
                 "transform": [1, 0, 0, 0.0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
             },
         ]
         p = tmp_path / "manifest.json"
         p.write_text(json.dumps(entries), encoding="utf-8")
-        _tiny_png(tmp_path / "frame_0000.png")
-        _tiny_png(tmp_path / "frame_0001.png")
+        _tiny_png(tmp_path / "src_0000.png")
+        _tiny_png(tmp_path / "tgt_0000.png")
+        _tiny_png(tmp_path / "src_0001.png")
+        _tiny_png(tmp_path / "tgt_0001.png")
         return p
 
     def test_adapt_split_filters(self, manifest_path: Path):
@@ -114,7 +113,8 @@ class TestManifestLoader:
         assert len(ds) == 1
 
     def test_missing_intrinsics_raises(self, manifest_path: Path):
-        entries = [{"split": "adapt", "image_path": "f.png",
+        entries = [{"split": "adapt",
+                     "source_image_path": "f.png", "target_image_path": "f.png",
                      "transform": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]}]
         p = manifest_path.parent / "bad.json"
         p.write_text(json.dumps(entries), encoding="utf-8")
@@ -123,7 +123,8 @@ class TestManifestLoader:
             AdaptationManifest(p)[0]
 
     def test_missing_pose_raises(self, manifest_path: Path):
-        entries = [{"split": "adapt", "image_path": "f.png",
+        entries = [{"split": "adapt",
+                     "source_image_path": "f.png", "target_image_path": "f.png",
                      "intrinsics": [500, 0, 320, 0, 500, 240, 0, 0, 1]}]
         p = manifest_path.parent / "bad2.json"
         p.write_text(json.dumps(entries), encoding="utf-8")
@@ -131,15 +132,37 @@ class TestManifestLoader:
         with pytest.raises(ValueError, match="Pose"):
             AdaptationManifest(p)[0]
 
-    def test_tiny_baseline_raises(self, manifest_path: Path):
+    def test_missing_source_or_target_raises(self, manifest_path: Path):
         entries = [{"split": "adapt", "image_path": "f.png",
+                     "intrinsics": [500, 0, 320, 0, 500, 240, 0, 0, 1],
+                     "transform": [1, 0, 0, 0.1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]}]
+        p = manifest_path.parent / "bad4.json"
+        p.write_text(json.dumps(entries), encoding="utf-8")
+        _tiny_png(manifest_path.parent / "f.png")
+        with pytest.raises(ValueError, match="source_image_path"):
+            AdaptationManifest(p)[0]
+
+    def test_tiny_baseline_raises(self, manifest_path: Path):
+        entries = [{"split": "adapt",
+                     "source_image_path": "f.png", "target_image_path": "f.png",
                      "intrinsics": [500, 0, 320, 0, 500, 240, 0, 0, 1],
                      "transform": [1, 0, 0, 0.001, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]}]
         p = manifest_path.parent / "bad3.json"
         p.write_text(json.dumps(entries), encoding="utf-8")
         _tiny_png(manifest_path.parent / "f.png")
         with pytest.raises(ValueError, match="baseline"):
-            AdaptationManifest(p)[0]
+            AdaptationManifest(p, split="adapt")[0]
+
+    def test_test_split_skips_baseline(self, manifest_path: Path):
+        entries = [{"split": "test",
+                     "source_image_path": "f.png", "target_image_path": "f.png",
+                     "intrinsics": [500, 0, 320, 0, 500, 240, 0, 0, 1],
+                     "transform": [1, 0, 0, 0.0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]}]
+        p = manifest_path.parent / "ok_test.json"
+        p.write_text(json.dumps(entries), encoding="utf-8")
+        _tiny_png(manifest_path.parent / "f.png")
+        ds = AdaptationManifest(p, split="test")
+        assert len(ds) == 1  # zero-baseline test frame loads without error
 
 
 # ---------------------------------------------------------------------------
@@ -193,8 +216,7 @@ class TestGeometryValidity:
         assert mask.any()
 
     def test_known_translation_produces_correct_pixels(self):
-        B = 1
-        H, W = 4, 4
+        B, H, W = 1, 4, 4
         depth = torch.ones(B, H, W)
         fx = 10.0
         K = torch.tensor([[[fx, 0, W / 2], [0, fx, H / 2], [0, 0, 1]]])
@@ -208,7 +230,7 @@ class TestGeometryValidity:
 
 
 # ---------------------------------------------------------------------------
-# U3: TemporalConsistencyLoss fix (compares sampled at projected coords)
+# U3: TemporalConsistencyLoss
 # ---------------------------------------------------------------------------
 
 class TestTemporalConsistencyLoss:
@@ -244,7 +266,7 @@ class TestSceneManager:
         net.residual_head.weight.data.fill_(0.1)
         sm.reset()
         for k in state_before:
-            assert torch.allclose(net.state_dict()[k], state_before[k]), f"{k} diverged after reset"
+            assert torch.allclose(net.state_dict()[k], state_before[k])
 
     def test_infer_before_adapt_returns_base(self):
         class DummyBackbone(torch.nn.Module):
@@ -263,21 +285,59 @@ class TestSceneManager:
 
 
 # ---------------------------------------------------------------------------
-# Integration: known translation synthetic test (codex review requirement)
+# Integration: synthetic paired-frame adaptation
 # ---------------------------------------------------------------------------
 
-class TestSyntheticTranslation:
+class _DummyPairedBackbone(torch.nn.Module):
+    """Backbone stub that returns constant features and base_depth = ones."""
 
-    def test_known_translation_produces_coherent_projections(self):
-        B, H, W = 1, 4, 4
-        depth = torch.ones(B, H, W) * 2.0
-        fx = 10.0
-        K = torch.tensor([[[fx, 0, W / 2], [0, fx, H / 2], [0, 0, 1]]])
-        T = torch.eye(4).unsqueeze(0)
-        T[:, 0, 3] = 0.5
-        pixels, z = reproject_depth(depth, K, T)
-        assert torch.isfinite(pixels).all()
-        assert torch.isfinite(z).all()
-        assert (z > 0).all()
-        in_bounds = projected_coords_in_bounds(pixels, H, W)
-        assert in_bounds.any()
+    def __init__(self):
+        super().__init__()
+        self.embed_dim = 384
+
+    def features(self, x):
+        B = x.shape[0]
+        stage = type("S", (), {
+            "spatial_features": lambda *a: torch.randn(B, self.embed_dim, 37, 37)
+        })()
+        return type("Bundle", (), {"stages": [stage]})()
+
+    def forward(self, x):
+        B, _, H, W = x.shape
+        return torch.ones(B, 1, H, W)
+
+
+class TestAdaptationIntegration:
+
+    def test_adapt_changes_weights(self):
+        """End-to-end: a synthetic paired frame must produce at least one
+        valid optimization step and change a trainable parameter from init."""
+        backbone = _DummyPairedBackbone()
+        net = CorrectionNet()
+        H, W = 518, 518
+        intrinsics = torch.tensor([[500., 0, W / 2], [0., 500, H / 2], [0., 0, 1]])
+        T = torch.eye(4)
+        T[0, 3] = 0.3  # translation baseline
+
+        def _make_kf() -> dict:
+            img = torch.randn(3, H, W)
+            feats, bd = _extract_features_and_depth(backbone, img.unsqueeze(0))
+            return {
+                "features_src": feats[0], "base_depth_src": bd[0], "image_src": img,
+                "features_tgt": feats[0], "base_depth_tgt": bd[0], "image_tgt": img,
+                "intrinsics": intrinsics, "transform": T,
+            }
+
+        kf = _make_kf()
+        vf = _make_kf()
+        w_before = net.residual_head.weight.data.clone()
+        result = adapt_scene(
+            backbone, net, [kf], [vf],
+            device=torch.device("cpu"), num_steps=5, learning_rate=1e-3,
+        )
+        w_after = net.load_state_dict(result["adapted_state_dict"])
+        # Reload state dict and check that at least one parameter changed
+        net.load_state_dict(result["adapted_state_dict"])
+        changed = not torch.allclose(net.residual_head.weight.data, w_before, atol=1e-8)
+        assert changed, "adapt_scene should update at least one parameter"
+        assert len(result["step_metrics"]) >= 1

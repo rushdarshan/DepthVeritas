@@ -12,9 +12,7 @@ from depthlab.geometry import (
     reproject_depth,
     projected_coords_in_bounds,
     positive_z_mask,
-    occlusion_mask,
     sample_target_depth,
-    minimum_reprojection_mask,
 )
 from depthlab.losses.temporal import PhotometricConsistencyLoss, TemporalConsistencyLoss
 
@@ -27,7 +25,7 @@ def _extract_features_and_depth(
     """Extract frozen DA2 spatial features [B,384,h,w] and base depth [B,1,H,W]."""
     bundle = backbone.features(images)
     H, W = images.shape[-2:]
-    patch_h = int(H // 14)  # DA2 ViT patch size
+    patch_h = int(H // 14)
     patch_w = int(W // 14)
     features_4 = bundle.stages[-1].spatial_features(patch_h, patch_w)
     base_depth = backbone(images)
@@ -47,18 +45,23 @@ def adapt_scene(
     temporal_weight: float = 0.5,
     output_dir: Optional[Path] = None,
 ) -> dict:
-    """Run self-supervised scene adaptation.
+    """Run self-supervised scene adaptation on paired source/target frames.
+
+    Each keyframe dict must have:
+        features_src, base_depth_src, image_src     — source frame tensors
+        features_tgt, base_depth_tgt, image_tgt     — target frame tensors
+        intrinsics, transform                        — shared intrinsics + T_target_from_source
 
     Args:
         backbone: Frozen DA2 backbone (inference mode).
-        correction_net: CorrectionNet on CPU (will be moved to device).
-        keyframes: List of dicts with 'features', 'base_depth', 'image', 'intrinsics', 'transform'.
-        val_frames: Held-out validation frames (same schema) for best-checkpoint selection.
-        device: Target GPU device.
+        correction_net: CorrectionNet (will be deep-copied to device).
+        keyframes: Paired frames for training.
+        val_frames: Held-out paired frames for best-checkpoint selection.
+        device: Target device.
         num_steps: Max optimization steps.
         learning_rate: Adam learning rate.
         patience: Early stopping patience.
-        photometric_weight: Weight for photometric loss.
+        photometric_weight: Weight for photometric loss (target vs warped source).
         temporal_weight: Weight for temporal depth consistency loss.
         output_dir: Optional path to save adapted weights.
 
@@ -78,33 +81,54 @@ def adapt_scene(
 
     def _build_batch(kf: dict) -> tuple:
         return (
-            kf["features"].unsqueeze(0).to(device),
-            kf["base_depth"].unsqueeze(0).to(device),
-            kf["image"].unsqueeze(0).to(device),
+            kf["features_src"].unsqueeze(0).to(device),
+            kf["base_depth_src"].unsqueeze(0).to(device),
+            kf["image_src"].unsqueeze(0).to(device),
+            kf["features_tgt"].unsqueeze(0).to(device),
+            kf["base_depth_tgt"].unsqueeze(0).to(device),
+            kf["image_tgt"].unsqueeze(0).to(device),
             kf["intrinsics"].unsqueeze(0).to(device),
             kf["transform"].unsqueeze(0).to(device),
         )
 
+    def _paired_loss(
+        feat_src: torch.Tensor, bd_src: torch.Tensor, img_src: torch.Tensor,
+        feat_tgt: torch.Tensor, bd_tgt: torch.Tensor, img_tgt: torch.Tensor,
+        K: torch.Tensor, T: torch.Tensor,
+    ) -> torch.Tensor:
+        corrected_src, _, _ = net(feat_src, bd_src)
+        scaled_src = corrected_src * scale.clamp_min(0.1)
+        pixels, z = reproject_depth(scaled_src.squeeze(1), K, T)
+        H, W = scaled_src.shape[-2:]
+        in_bounds = projected_coords_in_bounds(pixels, H, W)
+        z_pos = positive_z_mask(z)
+        valid = in_bounds & z_pos
+        if not valid.any():
+            return torch.tensor(float("nan"), device=device)
+        photo = photo_loss_fn(img_tgt, img_src, pixels, mask=valid)
+
+        # ponytail: use target base depth as geometric anchor
+        depth_tgt = bd_tgt * scale.clamp_min(0.1)
+        temp = temp_loss_fn(depth_tgt, z.unsqueeze(1), pixels, mask=valid)
+        return photometric_weight * photo + temporal_weight * temp
+
     def _val_loss() -> torch.Tensor:
         net.eval()
-        total = 0.0
-        count = 0
+        losses = []
         with torch.no_grad():
             for vf in val_frames:
-                feat, bd, img, K, T = _build_batch(vf)
-                corrected, _, _ = net(feat, bd)
-                scaled_depth = corrected * scale.clamp_min(0.1)
-                _, z = reproject_depth(scaled_depth.squeeze(1), K, T)
-                in_bounds = projected_coords_in_bounds(
-                    torch.zeros(1, 2, *scaled_depth.shape[-2:], device=device), *scaled_depth.shape[-2:]
-                )
-                if in_bounds.any():
-                    total += (z[in_bounds[:, 0]]).abs().mean()
-                    count += 1
+                args = tuple(x.unsqueeze(0).to(device) for x in (
+                    vf["features_src"], vf["base_depth_src"], vf["image_src"],
+                    vf["features_tgt"], vf["base_depth_tgt"], vf["image_tgt"],
+                    vf["intrinsics"], vf["transform"],
+                ))
+                loss = _paired_loss(*args)
+                if torch.isfinite(loss):
+                    losses.append(loss)
         net.train()
-        if count == 0:
-            return torch.tensor(0.0, device=device)
-        return total / count
+        if not losses:
+            return torch.tensor(float("inf"), device=device)
+        return torch.stack(losses).mean()
 
     best_loss = float("inf")
     best_state = copy.deepcopy(net.state_dict())
@@ -118,29 +142,14 @@ def adapt_scene(
         n_pairs = 0
 
         for kf in keyframes:
-            feat, bd, img, K, T = _build_batch(kf)
-            corrected, gate, residual = net(feat, bd)
-            scaled_depth = corrected * scale.clamp_min(0.1)
-            pixels, z = reproject_depth(scaled_depth.squeeze(1), K, T)
-            H, W = scaled_depth.shape[-2:]
-            in_bounds = projected_coords_in_bounds(pixels, H, W)
-            z_pos = positive_z_mask(z)
-            valid_mask = in_bounds & z_pos
-
-            # ponytail: occlusion mask omitted — no valid target-depth estimate
-            # during self-supervised adaptation. Add when a geometry-validity
-            # module with reliable target depth is available.
-
-            if not valid_mask.any():
-                continue
-
-            photo_loss = photo_loss_fn(img, img, pixels, mask=valid_mask)
-            temp_loss = temp_loss_fn(scaled_depth, z.unsqueeze(1), pixels, mask=valid_mask)
-            pair_loss = photometric_weight * photo_loss + temporal_weight * temp_loss
-
+            args = tuple(x.unsqueeze(0).to(device) for x in (
+                kf["features_src"], kf["base_depth_src"], kf["image_src"],
+                kf["features_tgt"], kf["base_depth_tgt"], kf["image_tgt"],
+                kf["intrinsics"], kf["transform"],
+            ))
+            pair_loss = _paired_loss(*args)
             if not torch.isfinite(pair_loss):
                 continue
-
             total_loss = total_loss + pair_loss
             n_pairs += 1
 
@@ -154,10 +163,11 @@ def adapt_scene(
         optimizer.step()
 
         vloss = _val_loss()
-        step_metrics.append({"step": step, "train_loss": total_loss.item(), "val_loss": vloss.item()})
+        step_metrics.append({"step": step, "train_loss": total_loss.item(), "val_loss": vloss.item() if torch.isfinite(vloss) else float("inf")})
 
-        if vloss < best_loss:
-            best_loss = vloss.item()
+        v = vloss.item() if torch.isfinite(vloss) else float("inf")
+        if v < best_loss:
+            best_loss = v
             best_state = copy.deepcopy(net.state_dict())
             best_scale = scale.item()
             steps_no_improve = 0

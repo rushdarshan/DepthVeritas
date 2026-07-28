@@ -10,11 +10,12 @@ from torch.utils.data import Dataset
 
 
 class AdaptationManifest(Dataset):
-    """Load scene adaptation frames with known poses and intrinsics.
+    """Load paired source/target scene adaptation frames with known poses.
 
     Manifest JSON schema per entry:
-        image_path: str — path to RGB frame
-        intrinsics: list[float] — 3x3 intrinsic matrix (row-major)
+        source_image_path: str — path to source RGB frame
+        target_image_path: str — path to target RGB frame
+        intrinsics: list[float] — 3x3 intrinsic matrix (row-major, same for both)
         transform: list[float] — 4x4 T_target_from_source pose (row-major)
         split: str — "adapt" or "test"
 
@@ -22,6 +23,7 @@ class AdaptationManifest(Dataset):
     to target frame: x_target = T @ x_source.
 
     Missing intrinsics is always an error for v1 — no silent focal fallback.
+    Baseline check (translation magnitude) applies only to adaptation splits.
     """
 
     def __init__(
@@ -35,7 +37,10 @@ class AdaptationManifest(Dataset):
         self.manifest = Path(manifest)
         self.split = split
         self.min_baseline = min_baseline
-        self.check_baseline = min_baseline > 0 if check_baseline is None else check_baseline
+        if check_baseline is None:
+            self.check_baseline = split == "adapt" and min_baseline > 0
+        else:
+            self.check_baseline = check_baseline
         entries: List[Dict[str, Any]] = json.loads(self.manifest.read_text(encoding="utf-8"))
         self.entries = [e for e in entries if e.get("split", split) == split]
         if not self.entries:
@@ -63,8 +68,11 @@ class AdaptationManifest(Dataset):
             raise ValueError("Intrinsics required for v1 — no silent fallback")
         if "transform" not in row:
             raise ValueError("Pose (transform) required for v1")
+        if "source_image_path" not in row or "target_image_path" not in row:
+            raise ValueError("Both source_image_path and target_image_path required")
 
-        image = self._load_image(self.manifest.parent / row["image_path"])
+        src_img = self._load_image(self.manifest.parent / row["source_image_path"])
+        tgt_img = self._load_image(self.manifest.parent / row["target_image_path"])
         intrinsics = torch.tensor(row["intrinsics"], dtype=torch.float32).reshape(3, 3)
         pose = torch.tensor(row["transform"], dtype=torch.float32).reshape(4, 4)
 
@@ -76,7 +84,8 @@ class AdaptationManifest(Dataset):
             )
 
         result: Dict[str, torch.Tensor] = {
-            "image": image,
+            "source_image": src_img,
+            "target_image": tgt_img,
             "intrinsics": intrinsics,
             "transform": pose,
             "baseline": torch.tensor(baseline),

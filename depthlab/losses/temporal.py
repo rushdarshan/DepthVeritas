@@ -29,7 +29,9 @@ class PhotometricConsistencyLoss(nn.Module):
                 mask: Optional[torch.Tensor] = None) -> torch.Tensor:
         warped = sample_at_pixels(source, pixels)
         error = self.ssim_weight * _ssim(target, warped).mean(1) + (1 - self.ssim_weight) * (target - warped).abs().mean(1)
-        return error[mask].mean() if mask is not None and mask.any() else error.mean()
+        if mask is not None and mask.any():
+            return error[mask.squeeze(1)].mean()
+        return error.mean()
 
 
 class TemporalConsistencyLoss(nn.Module):
@@ -52,5 +54,7 @@ class TemporalConsistencyLoss(nn.Module):
         mask: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         depth_sampled = sample_at_pixels(depth_target, pixels)
-        error = (depth_sampled - projected_z).abs() / depth_sampled.clamp_min(self.min_z)
-        return error[mask].mean() if mask is not None and mask.any() else error.mean()
+        error = ((depth_sampled - projected_z).abs() / depth_sampled.clamp_min(self.min_z)).squeeze(1)
+        if mask is not None and mask.any():
+            return error[mask.squeeze(1)].mean()
+        return error.mean()

@@ -40,6 +40,13 @@ def get_head(name: str, **kwargs: Any) -> BaseHead:
     return _HEAD_REGISTRY[name](**kwargs)
 
 
+def build_head(name: str, config: Dict[str, Any] | None = None, **kwargs: Any) -> BaseHead:
+    """Config-friendly alias used by OpenSpec docs."""
+    params = dict(config or {})
+    params.update(kwargs)
+    return get_head(name, **params)
+
+
 def list_heads() -> List[str]:
     """
     Returns list of all registered head names.
@@ -48,11 +55,12 @@ def list_heads() -> List[str]:
 
 
 # Import head submodules to trigger registration
-from depthlab.heads import relative_depth
+from depthlab.heads import relative_depth, sef, uncertainty
 
 __all__ = [
     "BaseHead",
     "register_head",
     "get_head",
+    "build_head",
     "list_heads",
 ]

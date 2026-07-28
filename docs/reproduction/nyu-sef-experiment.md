@@ -27,3 +27,21 @@ Evaluation of `runs/sef-end-to-end/checkpoints/checkpoint_best.pth` produced:
 The machine returned to 44 C and 0 MiB allocated GPU memory after evaluation.
 These values describe the local NYU run only; they are not failure-benchmark
 scores and do not freeze benchmark version `1.0.0-dev`.
+
+## Local DA2 Comparison
+
+`scripts/compare_da2_sef.py` evaluated the official DA2 checkpoint and the
+trained SEF checkpoint on the same 290-image validation split. DA2 received
+its official ImageNet normalization; SEF received its training-time raw RGB
+input. SEF patch-grid predictions were upsampled to the 392-pixel target size.
+The table uses the standard per-image scale/shift alignment appropriate for
+relative-depth outputs.
+
+| Method | AbsRel | RMSE | delta1 |
+| --- | --- | --- | --- |
+| DA2 Small | 0.2264 | 0.7641 | 0.6448 |
+| DA2 Small + SEF | 0.2069 | 0.6863 | 0.6731 |
+
+SEF improved all three listed aligned metrics on this local split. This is an
+internal comparison, not a claim of superiority on the official NYUv2 protocol
+or the unpublished failure-mode benchmark.

@@ -18,6 +18,7 @@ if str(ROOT) not in sys.path:
 
 from depthlab.backbone.loader import load_da2_checkpoint
 from depthlab.data.transforms import normalize_image_tensor
+from depthlab.export import colored_ply_text, relative_point_cloud
 from depthlab.heads import get_head
 from depthlab.metrics.calibration import _tiles, _effective_validity_mask
 from depthlab.risk.artifact import CalibrationArtifact
@@ -74,21 +75,52 @@ def infer(image: Image.Image) -> tuple[Image.Image, np.ndarray, np.ndarray]:
     return display, colorize(da2), colorize(sef)
 
 
-def triage_overlay(risk_map: torch.Tensor, tile_size: int = 32) -> np.ndarray:
-    tile_risk = _tiles(risk_map, tile_size, agg="mean")
+def infer_with_entropy(image: Image.Image) -> tuple[Image.Image, np.ndarray, np.ndarray, np.ndarray]:
+    backbone, head, device = load_models()
+    display, tensor = prepare_image(image)
+    tensor = tensor.to(device)
+    feats = backbone.features(tensor)
+    da2 = backbone(normalize_image_tensor(tensor))[0]
+    sef_out = head(feats)
+    sef = F.interpolate(sef_out["depth"].unsqueeze(1), size=(392, 392), mode="bilinear", align_corners=False)[0, 0]
+    entropy = F.interpolate(sef_out["entropy"].unsqueeze(1), size=(392, 392), mode="bilinear", align_corners=False)[0, 0]
+    return display, colorize(da2), colorize(sef), entropy.cpu()
+
+
+@torch.no_grad()
+def infer_scene(image: Image.Image) -> tuple[Image.Image, torch.Tensor, torch.Tensor]:
+    """Return depth and uncertainty tensors for the interactive relative-scale view."""
+    backbone, head, device = load_models()
+    display, tensor = prepare_image(image)
+    output = head(backbone.features(tensor.to(device)))
+    depth = F.interpolate(output["depth"].unsqueeze(1), size=(392, 392), mode="bilinear", align_corners=False)[0, 0].cpu()
+    entropy = F.interpolate(output["entropy"].unsqueeze(1), size=(392, 392), mode="bilinear", align_corners=False)[0, 0].cpu()
+    return display, depth, entropy
+
+
+def triage_overlay(entropy_map: torch.Tensor, tile_size: int = 32) -> np.ndarray:
     artifact = _load_calibration_artifact()
     if artifact is None:
         return None
+    tile_risk = _tiles(entropy_map, tile_size, agg="mean")
+    state = artifact.combiner_state
+    if "entropy" not in state.get("mins", {}) or "entropy" not in state.get("ranges", {}):
+        return None
+    tile_risk = (tile_risk - float(state["mins"]["entropy"])) / max(
+        float(state["ranges"]["entropy"]), 1e-8
+    )
+    tile_risk = tile_risk.clamp(0.0, 1.0)
     policy = artifact.to_triage_policy()
     labels = policy.classify(tile_risk)
-    Ht = (risk_map.shape[-2] + tile_size - 1) // tile_size
-    Wt = (risk_map.shape[-1] + tile_size - 1) // tile_size
+    H, W = entropy_map.shape[-2], entropy_map.shape[-1]
+    Ht = (H + tile_size - 1) // tile_size
+    Wt = (W + tile_size - 1) // tile_size
     grid = labels.reshape(Ht, Wt).cpu().numpy()
-    overlay = np.zeros((*risk_map.shape[-2:], 3), dtype=np.uint8)
+    overlay = np.zeros((H, W, 3), dtype=np.uint8)
     for i in range(Ht):
         for j in range(Wt):
-            y0, y1 = i * tile_size, min((i + 1) * tile_size, risk_map.shape[-2])
-            x0, x1 = j * tile_size, min((j + 1) * tile_size, risk_map.shape[-1])
+            y0, y1 = i * tile_size, min((i + 1) * tile_size, H)
+            x0, x1 = j * tile_size, min((j + 1) * tile_size, W)
             label = grid[i, j]
             if label == TriageLabel.USABLE.value:
                 overlay[y0:y1, x0:x1] = (0, 180, 80)
@@ -131,7 +163,7 @@ aligned_sef = comparison.get("sef", {}).get("aligned", {})
 with st.sidebar:
     st.markdown("## DepthLab")
     st.caption("Depth intelligence research dashboard")
-    page = st.radio("View", ("Live comparison", "Experiment evidence", "Risk view", "How it works"), label_visibility="collapsed")
+    page = st.radio("View", ("Live comparison", "Experiment evidence", "Risk view", "Scene explorer", "How it works"), label_visibility="collapsed")
     st.divider()
     st.caption("NYU Depth V2 local experiment")
     st.caption("RTX 4050 6 GB | DA2-Small + SEF")
@@ -191,9 +223,9 @@ elif page == "Risk view":
     source = Image.open(uploaded) if uploaded is not None else Image.open(default_path)
     if st.button("Show risk overlay", type="primary", use_container_width=True, key="risk_btn"):
         with st.spinner("Computing depth and risk overlay..."):
-            display, da2_map, sef_map = infer(source)
+            display, da2_map, sef_map, entropy = infer_with_entropy(source)
             display_np = np.asarray(display)
-            overlay = triage_overlay(torch.randn(392, 392), tile_size=32)
+            overlay = triage_overlay(entropy, tile_size=32)
         orig_col, overlay_col, blended_col = st.columns(3)
         orig_col.image(display, caption="Input image", use_container_width=True)
         if overlay is not None:
@@ -204,6 +236,40 @@ elif page == "Risk view":
             overlay_col.markdown('<div class="status-line">No artifact — overlay unavailable.</div>', unsafe_allow_html=True)
     else:
         st.image(source, caption="Upload or use default sample.", use_container_width=False, width=420)
+
+elif page == "Scene explorer":
+    st.markdown('<div class="topline">Interactive scene understanding</div>', unsafe_allow_html=True)
+    st.markdown('<h1 class="project-title">Inspect relative depth and export the scene.</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="project-copy">Coordinates identify an image pixel. Depth and uncertainty are relative values; exported geometry is not metric scale.</p>', unsafe_allow_html=True)
+    uploaded = st.file_uploader("Choose an RGB image for scene inspection", type=("png", "jpg", "jpeg"), key="scene_upload")
+    default_path = ROOT / "data" / "nyu_depth_v2" / "images" / "0000.png"
+    source = Image.open(uploaded) if uploaded is not None else Image.open(default_path)
+    if st.button("Build scene export", type="primary", use_container_width=True, key="scene_btn"):
+        with st.spinner("Generating relative depth and scene export..."):
+            display, depth, entropy = infer_scene(source)
+        st.session_state["scene_depth"] = depth
+        st.session_state["scene_entropy"] = entropy
+        st.session_state["scene_display"] = display
+    if "scene_depth" in st.session_state:
+        display = st.session_state["scene_display"]
+        depth = st.session_state["scene_depth"]
+        entropy = st.session_state["scene_entropy"]
+        st.image(display, caption="Input image (select coordinates below)", use_container_width=False, width=560)
+        left, right = st.columns(2)
+        x = left.number_input("Pixel x", min_value=0, max_value=depth.shape[1] - 1, value=depth.shape[1] // 2, step=1)
+        y = right.number_input("Pixel y", min_value=0, max_value=depth.shape[0] - 1, value=depth.shape[0] // 2, step=1)
+        metrics = st.columns(2)
+        metrics[0].metric("Relative depth", f"{depth[int(y), int(x)].item():.4f}")
+        metrics[1].metric("SEF uncertainty", f"{entropy[int(y), int(x)].item():.4f}")
+        pixels = torch.from_numpy(np.asarray(display, dtype=np.float32) / 255.0).permute(2, 0, 1)
+        focal = max(depth.shape) * 1.2
+        intrinsics = torch.tensor([[focal, 0.0, (depth.shape[1] - 1) / 2], [0.0, focal, (depth.shape[0] - 1) / 2], [0.0, 0.0, 1.0]])
+        points, colors = relative_point_cloud(depth, pixels, intrinsics)
+        metadata = json.dumps({"model": "sef-vits", "scale": "relative", "image_size": list(depth.shape)}, indent=2)
+        st.download_button("Download relative-scale PLY", colored_ply_text(points, colors).encode("ascii"), file_name="depthlab_relative_scene.ply", mime="application/octet-stream")
+        st.download_button("Download prediction metadata", metadata.encode("utf-8"), file_name="depthlab_prediction.json", mime="application/json")
+    else:
+        st.image(source, caption="Upload or use default sample, then build the scene export.", use_container_width=False, width=420)
 
 else:
     st.markdown('<div class="topline">Research workflow</div>', unsafe_allow_html=True)

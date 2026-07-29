@@ -56,7 +56,7 @@ def list_heads() -> List[str]:
 
 # Lightweight heads remain usable in CPU-only CI. The official DPT decoder is
 # registered when the optional upstream checkout is available.
-from depthlab.heads import sef, uncertainty
+from depthlab.heads import sef, sparse, uncertainty
 
 try:
     from depthlab.heads import relative_depth

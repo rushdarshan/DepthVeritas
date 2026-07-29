@@ -30,6 +30,6 @@ def list_datasets() -> List[str]:
     return sorted(_DATASET_REGISTRY)
 
 
-from depthlab.data import datasets, temporal  # noqa: E402,F401
+from depthlab.data import datasets, procedural, temporal  # noqa: E402,F401
 
 __all__ = ["get_dataset", "list_datasets", "register_dataset"]

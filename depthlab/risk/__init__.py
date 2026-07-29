@@ -18,6 +18,10 @@ from depthlab.risk.evaluate import (
     evaluate_locked_test,
     evaluate_on_tiles,
 )
+from depthlab.risk.ensemble import (
+    HeadEnsemble,
+    tile_ensemble_risk_from_members,
+)
 
 __all__ = [
     "tile_entropy_risk",
@@ -32,4 +36,6 @@ __all__ = [
     "build_calibration_artifact",
     "evaluate_locked_test",
     "evaluate_on_tiles",
+    "HeadEnsemble",
+    "tile_ensemble_risk_from_members",
 ]

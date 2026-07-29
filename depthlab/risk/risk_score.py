@@ -63,12 +63,12 @@ class NormalizedCombiner:
             return torch.zeros_like(tensor)
         return (tensor - tmin) / r
 
-    def combine(self, signals: Dict[str, torch.Tensor]) -> torch.Tensor:
+    def combine(self, signals: Dict[str, torch.Tensor], *, enforce_shape: bool = True) -> torch.Tensor:
         combined = None
         for name, tensor in signals.items():
             if name not in self.mins:
                 raise KeyError(f"unknown signal '{name}', known: {list(self.mins)}")
-            if tensor.shape != self.shapes[name]:
+            if enforce_shape and tensor.shape != self.shapes[name]:
                 raise ValueError(f"signal '{name}' shape {tensor.shape} != expected {self.shapes[name]}")
             norm = self.normalize(name, tensor)
             if combined is None:

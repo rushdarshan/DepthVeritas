@@ -1,0 +1,101 @@
+{
+  "capabilities": [
+    {
+      "name": "DA2 checkpoint",
+      "reason": "Local DA2 checkpoint is available.",
+      "required_paths": [
+        "checkpoints\\depth_anything_v2_vits.pth"
+      ],
+      "status": "measured"
+    },
+    {
+      "name": "NYU RGB-D",
+      "reason": "Local NYU RGB-D data is available.",
+      "required_paths": [
+        "data\\nyu_depth_v2"
+      ],
+      "status": "measured"
+    },
+    {
+      "name": "SEF checkpoint",
+      "reason": "Local SEF checkpoint is available.",
+      "required_paths": [
+        "runs\\sef-end-to-end\\checkpoints\\checkpoint_best.pth"
+      ],
+      "status": "measured"
+    },
+    {
+      "name": "DINOv2 weights",
+      "reason": "No DINOv2 weights were supplied.",
+      "required_paths": [
+        "checkpoints\\dinov2.pth"
+      ],
+      "status": "unavailable"
+    },
+    {
+      "name": "Trusted video pose and flow",
+      "reason": "No trusted video manifest with pose/flow was supplied.",
+      "required_paths": [
+        "data\\video_manifest.json"
+      ],
+      "status": "unavailable"
+    },
+    {
+      "name": "Six-stratum reviewed benchmark",
+      "reason": "Requires licensed, human-reviewed samples in every stratum.",
+      "required_paths": [
+        "data\\failure_benchmark\\manifest.json"
+      ],
+      "status": "blocked"
+    },
+    {
+      "name": "Blender procedural renders",
+      "reason": "No rendered procedural dataset manifest is available.",
+      "required_paths": [
+        "data\\procedural\\manifest.json"
+      ],
+      "status": "unavailable"
+    }
+  ],
+  "command": "python scripts/nyu_failure_studio.py --split val --limit 290",
+  "environment": {
+    "cuda": {
+      "capability": [
+        8,
+        9
+      ],
+      "device": "NVIDIA GeForce RTX 4050 Laptop GPU",
+      "torch_cuda": "12.6",
+      "total_memory_bytes": 6438780928
+    },
+    "cuda_available": true,
+    "nvidia_smi": {
+      "driver": "610.62",
+      "power_w": 19.73,
+      "temperature_c": 56.0
+    },
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.13.7",
+    "torch": "2.12.1+cu126"
+  },
+  "extra": {
+    "scope": "Local NYU RGB-D perturbation study only; not the six-stratum failure-aware benchmark."
+  },
+  "inputs": [
+    {
+      "bytes": 118276,
+      "path": "C:\\Users\\rushd\\Downloads\\prj-res\\data\\depth_manifest.csv",
+      "sha256": "a787fde39149b0bcfc9281021b25e9645659c9b3cbab39864b33608505341ac7"
+    },
+    {
+      "bytes": 99218434,
+      "path": "C:\\Users\\rushd\\Downloads\\prj-res\\checkpoints\\depth_anything_v2_vits.pth",
+      "sha256": "715fade13be8f229f8a70cc02066f656f2423a59effd0579197bbf57860e1378"
+    }
+  ],
+  "outputs": [
+    "artifacts\\nyu_failure_studio_full.json"
+  ],
+  "schema_version": 1,
+  "tier": "measured"
+}

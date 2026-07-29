@@ -79,6 +79,23 @@ curated counts, and baseline predictions exist. See `IMPLEMENTATION_STATUS.md`
 for the distinction between verified platform code and dataset-dependent
 research evidence.
 
+## Evidence and Local Diagnostics
+
+DepthLab records a capability matrix and hashes inputs for every local evidence
+run. This prevents local, synthetic, and unavailable work from being presented
+as the public six-stratum benchmark.
+
+```powershell
+python scripts/profile_da2.py --sizes 392 518 --repeats 5
+python scripts/nyu_failure_studio.py --split val --limit 290
+```
+
+The first command writes a GPU latency/VRAM envelope and environment snapshot.
+The second evaluates only the supplied NYU validation images under controlled
+darkening, blur, JPEG, and center-crop perturbations. Its report explicitly
+states that it is not failure-benchmark coverage. Each run creates a JSON
+report plus a companion `*_evidence.json` file under `artifacts/`.
+
 ## Local Training Summary
 
 The completed local experiment used:

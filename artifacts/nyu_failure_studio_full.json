@@ -1,0 +1,81 @@
+{
+  "evidence_tier": "measured",
+  "scope": "Local NYU RGB-D perturbation study only; not the six-stratum failure-aware benchmark.",
+  "dataset": {
+    "manifest": "C:\\Users\\rushd\\Downloads\\prj-res\\data\\depth_manifest.csv",
+    "split": "val",
+    "samples": 290
+  },
+  "perturbations": {
+    "baseline": {
+      "abs_rel": 0.166313,
+      "sq_rel": 0.14486,
+      "rmse": 0.585332,
+      "rmse_log": 0.401761,
+      "silog": 40.027014,
+      "log10": 0.082666,
+      "delta1": 0.785768,
+      "delta2": 0.934159,
+      "delta3": 0.971451,
+      "d1": 0.785768,
+      "d2": 0.934159,
+      "d3": 0.971451
+    },
+    "darken": {
+      "abs_rel": 0.170365,
+      "sq_rel": 0.152644,
+      "rmse": 0.604517,
+      "rmse_log": 0.398079,
+      "silog": 39.677195,
+      "log10": 0.083626,
+      "delta1": 0.777288,
+      "delta2": 0.930992,
+      "delta3": 0.970351,
+      "d1": 0.777288,
+      "d2": 0.930992,
+      "d3": 0.970351
+    },
+    "blur": {
+      "abs_rel": 0.183891,
+      "sq_rel": 0.174749,
+      "rmse": 0.647639,
+      "rmse_log": 0.369958,
+      "silog": 36.863171,
+      "log10": 0.086696,
+      "delta1": 0.753641,
+      "delta2": 0.920764,
+      "delta3": 0.966578,
+      "d1": 0.753641,
+      "d2": 0.920764,
+      "d3": 0.966578
+    },
+    "jpeg": {
+      "abs_rel": 0.169987,
+      "sq_rel": 0.148725,
+      "rmse": 0.590402,
+      "rmse_log": 0.378955,
+      "silog": 37.73194,
+      "log10": 0.083009,
+      "delta1": 0.776863,
+      "delta2": 0.930174,
+      "delta3": 0.970559,
+      "d1": 0.776863,
+      "d2": 0.930174,
+      "d3": 0.970559
+    },
+    "center_crop": {
+      "abs_rel": 0.131956,
+      "sq_rel": 0.100146,
+      "rmse": 0.473378,
+      "rmse_log": 0.263564,
+      "silog": 26.175259,
+      "log10": 0.064379,
+      "delta1": 0.843912,
+      "delta2": 0.954648,
+      "delta3": 0.981259,
+      "d1": 0.843912,
+      "d2": 0.954648,
+      "d3": 0.981259
+    }
+  }
+}

@@ -11,7 +11,13 @@ from .adapter import (
     LoRAAdapter,
     DA2Backbone,
 )
-from .loader import load_da2_checkpoint
+
+
+def load_da2_checkpoint(*args, **kwargs):
+    """Lazily import the optional upstream DA2 loader on first model use."""
+    from .loader import load_da2_checkpoint as _load_da2_checkpoint
+
+    return _load_da2_checkpoint(*args, **kwargs)
 
 __all__ = [
     "FeatureStage",

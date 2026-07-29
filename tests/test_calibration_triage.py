@@ -11,6 +11,58 @@ from depthlab.metrics.calibration import (
 )
 
 
+class TestEffectiveValidityMask:
+
+    def test_finite_positive_pass_through(self):
+        from depthlab.metrics.calibration import _effective_validity_mask
+        pred = torch.tensor([[1.0, 2.0, 3.0]])
+        target = torch.tensor([[1.0, 2.0, 3.0]])
+        mask = _effective_validity_mask(pred, target)
+        assert mask.all().item()
+
+    def test_nan_pred_masked_out(self):
+        from depthlab.metrics.calibration import _effective_validity_mask
+        pred = torch.tensor([[float("nan"), 2.0]])
+        target = torch.tensor([[1.0, 2.0]])
+        mask = _effective_validity_mask(pred, target)
+        assert not mask[0, 0].item()
+        assert mask[0, 1].item()
+
+    def test_inf_pred_masked_out(self):
+        from depthlab.metrics.calibration import _effective_validity_mask
+        pred = torch.tensor([[float("inf"), 2.0]])
+        target = torch.tensor([[1.0, 2.0]])
+        mask = _effective_validity_mask(pred, target)
+        assert not mask[0, 0].item()
+        assert mask[0, 1].item()
+
+    def test_zero_target_masked_out(self):
+        from depthlab.metrics.calibration import _effective_validity_mask
+        pred = torch.tensor([[1.0, 2.0]])
+        target = torch.tensor([[0.0, 2.0]])
+        mask = _effective_validity_mask(pred, target)
+        assert not mask[0, 0].item()
+        assert mask[0, 1].item()
+
+    def test_negative_pred_masked_out(self):
+        from depthlab.metrics.calibration import _effective_validity_mask
+        pred = torch.tensor([[-1.0, 2.0]])
+        target = torch.tensor([[1.0, 2.0]])
+        mask = _effective_validity_mask(pred, target)
+        assert not mask[0, 0].item()
+        assert mask[0, 1].item()
+
+    def test_caller_mask_intersects_with_effective(self):
+        from depthlab.metrics.calibration import _effective_validity_mask
+        pred = torch.tensor([[float("nan"), 2.0, 3.0]])
+        target = torch.tensor([[1.0, 2.0, 3.0]])
+        caller = torch.tensor([[True, True, False]])
+        mask = _effective_validity_mask(pred, target, caller)
+        assert not mask[0, 0].item()
+        assert mask[0, 1].item()
+        assert not mask[0, 2].item()
+
+
 class TestDepthErrorEvent:
 
     def test_flags_high_error_pixels(self):
@@ -25,6 +77,27 @@ class TestDepthErrorEvent:
         target = torch.full((3, 16, 16), 2.0)
         err = depth_error_event(pred, target, threshold_ratio=0.5)
         assert not err.any().item()
+
+    def test_auto_masks_zero_target_no_caller_mask(self):
+        pred = torch.tensor([[1.0, 5.0]])
+        target = torch.tensor([[0.0, 1.0]])
+        err = depth_error_event(pred, target, threshold_ratio=0.1, mask=None)
+        assert not err[0, 0].item()
+        assert err[0, 1].item()
+
+    def test_auto_masks_nan_pred_no_caller_mask(self):
+        pred = torch.tensor([[float("nan"), 5.0]])
+        target = torch.tensor([[1.0, 1.0]])
+        err = depth_error_event(pred, target, threshold_ratio=0.1, mask=None)
+        assert not err[0, 0].item()
+        assert err[0, 1].item()
+
+    def test_auto_masks_negative_pred_no_caller_mask(self):
+        pred = torch.tensor([[-1.0, 5.0]])
+        target = torch.tensor([[1.0, 1.0]])
+        err = depth_error_event(pred, target, threshold_ratio=0.1, mask=None)
+        assert not err[0, 0].item()
+        assert err[0, 1].item()
 
     def test_shape_match(self):
         pred = torch.randn(4, 32, 48)
@@ -87,7 +160,8 @@ class TestTileOps:
     def test_non_divisible_edge(self):
         x = torch.ones(1, 10, 10)
         tiles = _tiles(x, tile_size=4, agg="mean")
-        assert tiles.shape == (1, 4)
+        assert tiles.shape == (1, 9)
+        assert (tiles == 1.0).all()
 
     def test_sum_aggregation(self):
         x = torch.zeros(1, 4, 4)
@@ -96,10 +170,25 @@ class TestTileOps:
         assert tiles.shape == (1, 4)
         assert tiles[0, 0].item() == 4.0
 
-    def test_image_smaller_than_tile_returns_empty(self):
+    def test_pads_remainder_to_cover_all_pixels(self):
+        x = torch.ones(1, 10, 10)
+        tiles = _tiles(x, tile_size=4, agg="mean")
+        assert tiles.shape == (1, 9)
+
+    def test_tile_count_covers_padded_area(self):
+        x = torch.rand(1, 5, 7)
+        tiles = _tiles(x, tile_size=4, agg="mean")
+        assert tiles.shape == (1, 4)
+
+    def test_non_divisible_edge_all_pixels_covered(self):
+        x = torch.rand(1, 9, 9)
+        tiles = _tiles(x, tile_size=4, agg="mean")
+        assert tiles.shape == (1, 9)
+
+    def test_small_images_now_get_one_tile(self):
         x = torch.ones(1, 4, 4)
         tiles = _tiles(x, tile_size=8, agg="mean")
-        assert tiles.shape == (1, 0)
+        assert tiles.shape == (1, 1)
 
     def test_raises_on_zero_tile_size(self):
         try:

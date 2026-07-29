@@ -9,6 +9,15 @@ from depthlab.risk.calibrate import (
     TriagePolicy,
     TriageLabel,
 )
+from depthlab.risk.artifact import (
+    CalibrationArtifact,
+    SplitMetadata,
+    build_calibration_artifact,
+)
+from depthlab.risk.evaluate import (
+    evaluate_locked_test,
+    evaluate_on_tiles,
+)
 
 __all__ = [
     "tile_entropy_risk",
@@ -18,4 +27,9 @@ __all__ = [
     "calibrate_thresholds",
     "TriagePolicy",
     "TriageLabel",
+    "CalibrationArtifact",
+    "SplitMetadata",
+    "build_calibration_artifact",
+    "evaluate_locked_test",
+    "evaluate_on_tiles",
 ]

@@ -65,6 +65,18 @@ def uncertainty_metrics(probabilities: torch.Tensor, target_bins: torch.Tensor,
     }
 
 
+def _effective_validity_mask(
+    pred: torch.Tensor, target: torch.Tensor,
+    caller_mask: Optional[torch.Tensor] = None,
+) -> torch.Tensor:
+    finite = pred.isfinite() & target.isfinite()
+    positive = (pred > 0) & (target > 0)
+    valid = finite & positive
+    if caller_mask is not None:
+        valid = valid & caller_mask
+    return valid
+
+
 def depth_error_event(
     pred: torch.Tensor, target: torch.Tensor,
     threshold_ratio: float = 0.1,
@@ -76,10 +88,10 @@ def depth_error_event(
     if align_scale_shift:
         from depthlab.metrics.depth_metrics import align_depth_scale_shift
         pred = align_depth_scale_shift(pred, target, mask)
+    valid = _effective_validity_mask(pred, target, mask)
     rel = (pred - target).abs() / target.clamp_min(1e-6)
     err = rel > threshold_ratio
-    if mask is not None:
-        err = err & mask
+    err = err & valid
     return err
 
 
@@ -93,15 +105,14 @@ def _tiles(tensor: torch.Tensor, tile_size: int, agg: str = "mean") -> torch.Ten
         tensor = tensor.unsqueeze(0)
         stack = True
     B, H, W = tensor.shape
-    Ht = H // tile_size
-    Wt = W // tile_size
-    if Ht < 1 or Wt < 1:
-        result = torch.zeros(B, 0, device=tensor.device, dtype=tensor.dtype)
-        if stack:
-            result = result.squeeze(0)
-        return result
-    trimmed = tensor[:, :Ht * tile_size, :Wt * tile_size]
-    tiles = trimmed.view(B, Ht, tile_size, Wt, tile_size).permute(0, 1, 3, 2, 4).reshape(B, Ht * Wt, tile_size * tile_size)
+    H_pad = (tile_size - H % tile_size) % tile_size
+    W_pad = (tile_size - W % tile_size) % tile_size
+    if H_pad > 0 or W_pad > 0:
+        tensor = torch.nn.functional.pad(tensor, (0, W_pad, 0, H_pad), mode="replicate")
+    padded_H, padded_W = tensor.shape[1], tensor.shape[2]
+    Ht = padded_H // tile_size
+    Wt = padded_W // tile_size
+    tiles = tensor.view(B, Ht, tile_size, Wt, tile_size).permute(0, 1, 3, 2, 4).reshape(B, Ht * Wt, tile_size * tile_size)
     if agg == "mean":
         result = tiles.mean(dim=-1)
     elif agg == "max":

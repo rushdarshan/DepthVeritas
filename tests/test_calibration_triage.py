@@ -39,6 +39,22 @@ class TestDepthErrorEvent:
         err = depth_error_event(pred, target, align_scale_shift=True)
         assert err.shape == pred.shape
 
+    def test_mask_suppresses_error_outside_valid_region(self):
+        pred = torch.tensor([[1.0, 5.0]])
+        target = torch.tensor([[1.0, 1.0]])
+        mask = torch.tensor([[True, False]])
+        err = depth_error_event(pred, target, threshold_ratio=0.1, mask=mask)
+        assert not err[0, 0].item()
+        assert not err[0, 1].item()
+
+    def test_mask_leaves_error_inside_valid_region(self):
+        pred = torch.tensor([[1.0, 5.0]])
+        target = torch.tensor([[1.0, 1.0]])
+        mask = torch.tensor([[True, True]])
+        err = depth_error_event(pred, target, threshold_ratio=0.1, mask=mask)
+        assert not err[0, 0].item()
+        assert err[0, 1].item()
+
 
 class TestTileOps:
 
@@ -72,6 +88,25 @@ class TestTileOps:
         x = torch.ones(1, 10, 10)
         tiles = _tiles(x, tile_size=4, agg="mean")
         assert tiles.shape == (1, 4)
+
+    def test_sum_aggregation(self):
+        x = torch.zeros(1, 4, 4)
+        x[:, :2, :2] = 1.0
+        tiles = _tiles(x, tile_size=2, agg="sum")
+        assert tiles.shape == (1, 4)
+        assert tiles[0, 0].item() == 4.0
+
+    def test_image_smaller_than_tile_returns_empty(self):
+        x = torch.ones(1, 4, 4)
+        tiles = _tiles(x, tile_size=8, agg="mean")
+        assert tiles.shape == (1, 0)
+
+    def test_raises_on_zero_tile_size(self):
+        try:
+            _tiles(torch.ones(4, 4), tile_size=0)
+            assert False, "expected ValueError"
+        except ValueError:
+            pass
 
 
 class TestRiskCoverageCurve:

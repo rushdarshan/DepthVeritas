@@ -77,12 +77,17 @@ def depth_error_event(
         from depthlab.metrics.depth_metrics import align_depth_scale_shift
         pred = align_depth_scale_shift(pred, target, mask)
     rel = (pred - target).abs() / target.clamp_min(1e-6)
-    return rel > threshold_ratio
+    err = rel > threshold_ratio
+    if mask is not None:
+        err = err & mask
+    return err
 
 
 def _tiles(tensor: torch.Tensor, tile_size: int, agg: str = "mean") -> torch.Tensor:
     if tensor.ndim not in (2, 3):
         raise ValueError("tensor must be 2D (H,W) or 3D (B,H,W)")
+    if tile_size < 1:
+        raise ValueError(f"tile_size must be >=1, got {tile_size}")
     stack = False
     if tensor.ndim == 2:
         tensor = tensor.unsqueeze(0)
@@ -90,6 +95,11 @@ def _tiles(tensor: torch.Tensor, tile_size: int, agg: str = "mean") -> torch.Ten
     B, H, W = tensor.shape
     Ht = H // tile_size
     Wt = W // tile_size
+    if Ht < 1 or Wt < 1:
+        result = torch.zeros(B, 0, device=tensor.device, dtype=tensor.dtype)
+        if stack:
+            result = result.squeeze(0)
+        return result
     trimmed = tensor[:, :Ht * tile_size, :Wt * tile_size]
     tiles = trimmed.view(B, Ht, tile_size, Wt, tile_size).permute(0, 1, 3, 2, 4).reshape(B, Ht * Wt, tile_size * tile_size)
     if agg == "mean":
@@ -98,6 +108,8 @@ def _tiles(tensor: torch.Tensor, tile_size: int, agg: str = "mean") -> torch.Ten
         result = tiles.amax(dim=-1)
     elif agg == "any":
         result = tiles.any(dim=-1).float()
+    elif agg == "sum":
+        result = tiles.sum(dim=-1)
     else:
         raise ValueError(f"Unknown agg: {agg}")
     if stack:

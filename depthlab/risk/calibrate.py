@@ -65,6 +65,4 @@ def calibrate_thresholds(
             if cov > best_usable_cov:
                 best_usable_cov = cov
                 best_pair = (float(t_u), float(t_a))
-    if best_pair is None:
-        return (1.0, 1.0)
     return best_pair

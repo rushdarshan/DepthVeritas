@@ -19,13 +19,19 @@ class TestTileEntropyRisk:
         risk = tile_entropy_risk(entropy, tile_size=16)
         assert risk.shape == (2, 16)
 
-    def test_valid_mask_zeroes_masked_regions(self):
+    def test_valid_mask_aggregates_only_valid_pixels(self):
         entropy = torch.ones(1, 32, 32)
         mask = torch.zeros(1, 32, 32, dtype=torch.bool)
         mask[:, 8:24, 8:24] = True
         risk = tile_entropy_risk(entropy, tile_size=8, valid_mask=mask)
-        assert risk[0, 0] == 0.0
+        assert risk[0, 0] == 1.0
         assert risk[0, 5] > 0
+
+    def test_fully_invalid_tile_forced_to_max_risk(self):
+        entropy = torch.ones(1, 32, 32)
+        mask = torch.zeros(1, 32, 32, dtype=torch.bool)
+        risk = tile_entropy_risk(entropy, tile_size=8, valid_mask=mask)
+        assert (risk == 1.0).all()
 
     def test_2d_input(self):
         entropy = torch.rand(32, 32)
@@ -86,3 +92,36 @@ class TestNormalizedCombiner:
             assert False, "expected ValueError"
         except ValueError:
             pass
+
+    def test_normalize_uses_stored_min_not_batch_min(self):
+        calib_signal = torch.tensor([2.0, 4.0])
+        combiner = NormalizedCombiner({"x": calib_signal})
+        new_batch = torch.tensor([1.0, 3.0])
+        norm = combiner.normalize("x", new_batch)
+        expected = (new_batch - 2.0) / 2.0
+        assert torch.allclose(norm, expected)
+
+    def test_unknown_signal_raises(self):
+        combiner = NormalizedCombiner({"a": torch.tensor([0.0, 1.0])})
+        try:
+            combiner.normalize("b", torch.tensor([0.0, 1.0]))
+            assert False, "expected KeyError"
+        except KeyError:
+            pass
+
+    def test_shape_mismatch_raises(self):
+        combiner = NormalizedCombiner({"a": torch.tensor([0.0, 1.0])})
+        try:
+            combiner.combine({"a": torch.tensor([0.0, 1.0, 2.0])})
+            assert False, "expected ValueError"
+        except ValueError:
+            pass
+
+    def test_state_dict_roundtrip(self):
+        combiner = NormalizedCombiner({"a": torch.tensor([0.0, 2.0]), "b": torch.tensor([5.0, 10.0])})
+        d = combiner.state_dict()
+        combiner2 = NormalizedCombiner.from_state_dict(d)
+        assert combiner2.mins == {"a": 0.0, "b": 5.0}
+        assert combiner2.ranges == {"a": 2.0, "b": 5.0}
+        combined = combiner2.combine({"a": torch.tensor([1.0, 2.0]), "b": torch.tensor([7.0, 10.0])})
+        assert combined is not None

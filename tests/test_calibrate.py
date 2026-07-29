@@ -52,11 +52,28 @@ class TestCalibrateThresholds:
         assert 0 <= t_u <= 1
         assert 0 <= t_a <= 1
 
-    def test_returns_fallback_when_separation_impossible(self):
+    def test_returns_none_when_no_feasible_threshold(self):
         risk = torch.ones(50)
         err = torch.ones(50)
         result = calibrate_thresholds(risk, err, target_fur=0.01, n_steps=20)
-        assert result == (1.0, 1.0)
+        assert result is None
+
+    def test_calibrate_result_feeds_triage_policy(self):
+        torch.manual_seed(0)
+        risk = torch.rand(200)
+        err = torch.cat([torch.zeros(180), torch.ones(20)])
+        result = calibrate_thresholds(risk, err, target_fur=0.05, n_steps=50)
+        assert result is not None
+        t_u, t_a = result
+        pol = TriagePolicy(t_u, t_a)
+        labels = pol.classify(risk)
+        assert labels.shape == risk.shape
+
+    def test_none_result_cannot_construct_policy(self):
+        risk = torch.ones(50)
+        err = torch.ones(50)
+        result = calibrate_thresholds(risk, err, target_fur=0.01, n_steps=20)
+        assert result is None
 
     def test_shape_mismatch_raises(self):
         try:

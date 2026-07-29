@@ -17,7 +17,6 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from depthlab.backbone.loader import load_da2_checkpoint
 from depthlab.data import get_dataset
 from depthlab.data.transforms import normalize_image_tensor
 from depthlab.evidence import capability_matrix, write_evidence_bundle
@@ -66,6 +65,8 @@ def main() -> None:
     if args.limit < 1:
         raise ValueError("limit must be positive")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    from depthlab.backbone.loader import load_da2_checkpoint
+
     model = load_da2_checkpoint("vits", ROOT / "checkpoints" / "depth_anything_v2_vits.pth", str(device)).eval()
     dataset = get_dataset("file_list", manifest=args.manifest, split=args.split, image_size=392)
     perturbations = ("baseline", "darken", "blur", "jpeg", "center_crop")

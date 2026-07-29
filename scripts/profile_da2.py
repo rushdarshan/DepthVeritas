@@ -15,7 +15,6 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from depthlab.backbone.loader import load_da2_checkpoint
 from depthlab.evidence import capability_matrix, write_evidence_bundle
 
 
@@ -52,6 +51,8 @@ def main() -> None:
     parser.add_argument("--output", type=Path, default=ROOT / "artifacts" / "da2_operating_envelope.json")
     args = parser.parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    from depthlab.backbone.loader import load_da2_checkpoint
+
     model = load_da2_checkpoint("vits", ROOT / "checkpoints" / "depth_anything_v2_vits.pth", str(device)).eval()
     results = [profile(model, device, size, args.repeats) for size in args.sizes]
     args.output.parent.mkdir(parents=True, exist_ok=True)

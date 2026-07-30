@@ -59,7 +59,10 @@ false-usable-rate target.
 
 ## Product Demo
 
-[![DepthLab product demo preview](videos/depthlab-demo/snapshots/frame-02-at-32.8s.png)](videos/depthlab-demo/renders/depthlab-demo.mp4)
+<video controls preload="metadata" width="960">
+  <source src="videos/depthlab-demo/renders/depthlab-demo.mp4" type="video/mp4">
+  Your browser does not support embedded video.
+</video>
 
 Watch the [75-second local product demo](videos/depthlab-demo/renders/depthlab-demo.mp4)
 for the RGB-to-depth comparison, local NYU result, and the clearly labelled

@@ -1,0 +1,22 @@
+{
+  "device": "cuda",
+  "results": [
+    {
+      "size": 256,
+      "status": "rejected",
+      "reason": "DA2 input size must be divisible by patch size 14"
+    },
+    {
+      "size": 392,
+      "status": "measured",
+      "median_latency_ms": 58.974,
+      "peak_vram_mb": 172.07
+    },
+    {
+      "size": 518,
+      "status": "measured",
+      "median_latency_ms": 52.906,
+      "peak_vram_mb": 225.01
+    }
+  ]
+}

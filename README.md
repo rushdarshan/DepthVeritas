@@ -60,13 +60,12 @@ false-usable-rate target.
 ## Product Demo
 
 <video controls preload="metadata" width="960">
-  <source src="videos/depthlab-demo/renders/depthlab-demo.mp4" type="video/mp4">
+  <source src="https://github.com/user-attachments/assets/7f857582-91e6-41d7-95ae-f74c1786449e" type="video/mp4">
   Your browser does not support embedded video.
 </video>
 
-Watch the [75-second local product demo](videos/depthlab-demo/renders/depthlab-demo.mp4)
-for the RGB-to-depth comparison, local NYU result, and the clearly labelled
-illustrative risk cues.
+The 75-second product demo shows the RGB-to-depth comparison, local NYU result,
+and clearly labelled illustrative risk cues.
 
 ## Data and Experiments
 
